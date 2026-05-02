@@ -1,0 +1,16 @@
+{
+  "error": "no_match",
+  "fragment": "zzz",
+  "open_tasks": [
+    {
+      "id": "11111111",
+      "created": "2026-04-29T09:00:00Z",
+      "description": "first task"
+    },
+    {
+      "id": "22222222",
+      "created": "2026-04-29T10:00:00Z",
+      "description": "second task"
+    }
+  ]
+}

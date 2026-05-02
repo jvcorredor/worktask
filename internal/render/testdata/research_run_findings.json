@@ -1,0 +1,7 @@
+{
+  "id": "abcdef12",
+  "description": "buy milk",
+  "status": "findings",
+  "summary": "deploy lock",
+  "log_path": "research-logs/abcdef12_2026-05-01T14-00-00.jsonl"
+}

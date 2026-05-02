@@ -1,0 +1,38 @@
+{
+  "batch_id": "2026-05-01T14:00:00Z",
+  "started": "2026-05-01T14:00:00Z",
+  "finished": "2026-05-01T14:08:30Z",
+  "results": [
+    {
+      "id": "abcdef12",
+      "description": "buy milk",
+      "status": "findings",
+      "summary": "deploy lock",
+      "log_path": "research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+      "tokens": 1234
+    },
+    {
+      "id": "fedcba98",
+      "description": "investigate dashboard",
+      "status": "clarify",
+      "summary": "what is X",
+      "log_path": "research-logs/fedcba98_2026-05-01T14-01-00.jsonl",
+      "tokens": 500
+    },
+    {
+      "id": "11111111",
+      "description": "datadog hang",
+      "status": "failed",
+      "summary": "claude exited 1",
+      "log_path": "research-logs/11111111_2026-05-01T14-02-00.jsonl",
+      "tokens": 0,
+      "error": "exit status 1"
+    }
+  ],
+  "totals": {
+    "findings": 1,
+    "clarify": 1,
+    "failed": 1,
+    "skipped": 4
+  }
+}

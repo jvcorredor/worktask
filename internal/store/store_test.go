@@ -1,0 +1,767 @@
+package store
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/jvcorredor/worktask/internal/task"
+)
+
+func TestAdd_writesFileToOpenDir(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+
+	task, err := s.Add("buy milk")
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	wantPath := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	if _, err := os.Stat(wantPath); err != nil {
+		t.Fatalf("expected file at %s: %v", wantPath, err)
+	}
+
+	if task.ID != "abcdef12" {
+		t.Errorf("task.ID = %q; want %q", task.ID, "abcdef12")
+	}
+
+	got, err := os.ReadFile(wantPath)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\n"
+	if string(got) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestAdd_unicodeOnlyDescriptionOmitsSlug(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+
+	if _, err := s.Add("🚀"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	wantPath := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12.md")
+	if _, err := os.Stat(wantPath); err != nil {
+		t.Fatalf("expected file at %s: %v", wantPath, err)
+	}
+}
+
+func TestList_returnsOpenTasksInChronologicalOrder(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("first"); err != nil {
+		t.Fatalf("Add first: %v", err)
+	}
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("second"); err != nil {
+		t.Fatalf("Add second: %v", err)
+	}
+
+	tasks, err := s.List(FilterOpen, 0)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(tasks) != 2 {
+		t.Fatalf("len(tasks) = %d; want 2", len(tasks))
+	}
+	if tasks[0].ID != "11111111" {
+		t.Errorf("tasks[0].ID = %q; want 11111111", tasks[0].ID)
+	}
+	if tasks[1].ID != "22222222" {
+		t.Errorf("tasks[1].ID = %q; want 22222222", tasks[1].ID)
+	}
+	if tasks[0].Body != "first\n" {
+		t.Errorf("tasks[0].Body = %q; want %q", tasks[0].Body, "first\n")
+	}
+}
+
+func TestGet_exactID(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, raw, err := s.Get("abcdef12")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+	if got.Body != "buy milk\n" {
+		t.Errorf("got.Body = %q; want %q", got.Body, "buy milk\n")
+	}
+	wantRaw := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\n"
+	if string(raw) != wantRaw {
+		t.Errorf("raw bytes:\n--- got ---\n%s\n--- want ---\n%s", raw, wantRaw)
+	}
+}
+
+func TestGet_idPrefix(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, _, err := s.Get("abcd")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+}
+
+func TestGet_descriptionExactCI(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("Buy Milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, _, err := s.Get("buy milk")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+}
+
+func TestGet_descriptionSubstring(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("Buy Milk Today"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, _, err := s.Get("MILK")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+}
+
+func TestGet_idExactShortCircuits(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("first task"); err != nil {
+		t.Fatalf("Add A: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("see abcdef12 for context"); err != nil {
+		t.Fatalf("Add B: %v", err)
+	}
+
+	got, _, err := s.Get("abcdef12")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q (id-exact must short-circuit before description-substring fires)", got.ID, "abcdef12")
+	}
+}
+
+func TestGet_ambiguousReturnsTypedErrorWithCandidates(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add A: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("buy milkshake"); err != nil {
+		t.Fatalf("Add B: %v", err)
+	}
+
+	_, _, err := s.Get("milk")
+	if err == nil {
+		t.Fatalf("Get: expected error")
+	}
+	var amb *ErrAmbiguous
+	if !errors.As(err, &amb) {
+		t.Fatalf("error type = %T (%v); want *ErrAmbiguous", err, err)
+	}
+	if amb.Fragment != "milk" {
+		t.Errorf("Fragment = %q; want %q", amb.Fragment, "milk")
+	}
+	if len(amb.Candidates) != 2 {
+		t.Fatalf("len(Candidates) = %d; want 2", len(amb.Candidates))
+	}
+	gotIDs := map[string]string{}
+	for _, c := range amb.Candidates {
+		gotIDs[c.ID] = c.Description
+	}
+	if gotIDs["11111111"] != "buy milk" {
+		t.Errorf("Candidates[11111111].Description = %q; want %q", gotIDs["11111111"], "buy milk")
+	}
+	if gotIDs["22222222"] != "buy milkshake" {
+		t.Errorf("Candidates[22222222].Description = %q; want %q", gotIDs["22222222"], "buy milkshake")
+	}
+}
+
+func TestGet_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, _, err := s.Get("nonexistent-zzz")
+	if err == nil {
+		t.Fatalf("Get: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+	if nm.Fragment != "nonexistent-zzz" {
+		t.Errorf("Fragment = %q; want %q", nm.Fragment, "nonexistent-zzz")
+	}
+}
+
+func TestGet_resolvesClosedTasks(t *testing.T) {
+	dir := t.TempDir()
+	closedDir := filepath.Join(dir, "closed")
+	if err := os.MkdirAll(closedDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	created := time.Date(2026, 4, 28, 12, 0, 0, 0, time.UTC)
+	completed := time.Date(2026, 4, 29, 12, 0, 0, 0, time.UTC)
+	closedTask := task.Task{
+		ID:        "deadbeef",
+		Created:   created,
+		Completed: completed,
+		Body:      "shipped feature\n",
+	}
+	data, err := task.Encode(closedTask)
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	path := filepath.Join(closedDir, "2026-04-28T12-00_deadbeef_shipped-feature.md")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	s := New(dir)
+	got, _, err := s.Get("deadbeef")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.ID != "deadbeef" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "deadbeef")
+	}
+	if !got.Completed.Equal(completed) {
+		t.Errorf("got.Completed = %v; want %v", got.Completed, completed)
+	}
+}
+
+func TestComplete_movesFileFromOpenToClosedAndStampsCompleted(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	completedAt := time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC)
+	s.Now = func() time.Time { return completedAt }
+
+	got, err := s.Complete("abcdef12")
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+	if !got.Completed.Equal(completedAt) {
+		t.Errorf("got.Completed = %v; want %v", got.Completed, completedAt)
+	}
+
+	openPath := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	if _, err := os.Stat(openPath); !os.IsNotExist(err) {
+		t.Errorf("expected open file to be gone, stat err = %v", err)
+	}
+
+	closedPath := filepath.Join(dir, "closed", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(closedPath)
+	if err != nil {
+		t.Fatalf("expected closed file at %s: %v", closedPath, err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ncompleted: 2026-04-30T09:00:00Z\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("closed file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestReopen_movesFileFromClosedToOpenAndClearsCompleted(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Complete("abcdef12"); err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	got, err := s.Reopen("abcdef12")
+	if err != nil {
+		t.Fatalf("Reopen: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+	if !got.Completed.IsZero() {
+		t.Errorf("got.Completed = %v; want zero", got.Completed)
+	}
+
+	closedPath := filepath.Join(dir, "closed", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	if _, err := os.Stat(closedPath); !os.IsNotExist(err) {
+		t.Errorf("expected closed file to be gone, stat err = %v", err)
+	}
+
+	openPath := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(openPath)
+	if err != nil {
+		t.Fatalf("expected open file at %s: %v", openPath, err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("open file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestComplete_fragmentMatchingOnlyClosedReturnsNoMatch(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Complete("abcdef12"); err != nil {
+		t.Fatalf("first Complete: %v", err)
+	}
+
+	_, err := s.Complete("abcdef12")
+	if err == nil {
+		t.Fatalf("Complete: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestReopen_fragmentMatchingOnlyOpenReturnsNoMatch(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.Reopen("abcdef12")
+	if err == nil {
+		t.Fatalf("Reopen: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestList_filterClosedSortsByCompletedDescending(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("first"); err != nil {
+		t.Fatalf("Add first: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("second"); err != nil {
+		t.Fatalf("Add second: %v", err)
+	}
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Complete("11111111"); err != nil {
+		t.Fatalf("Complete first: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 10, 0, 0, 0, time.UTC) }
+	if _, err := s.Complete("22222222"); err != nil {
+		t.Fatalf("Complete second: %v", err)
+	}
+
+	tasks, err := s.List(FilterClosed, 20)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(tasks) != 2 {
+		t.Fatalf("len(tasks) = %d; want 2", len(tasks))
+	}
+	if tasks[0].ID != "22222222" {
+		t.Errorf("tasks[0].ID = %q; want 22222222 (most recently completed first)", tasks[0].ID)
+	}
+	if tasks[1].ID != "11111111" {
+		t.Errorf("tasks[1].ID = %q; want 11111111", tasks[1].ID)
+	}
+}
+
+func TestList_filterClosedHonorsLimit(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	for i := 0; i < 5; i++ {
+		hour := 9 + i
+		s.Now = func() time.Time { return time.Date(2026, 4, 29, hour, 0, 0, 0, time.UTC) }
+		id := fmt.Sprintf("%08d", i)
+		s.NewID = func() string { return id }
+		if _, err := s.Add(fmt.Sprintf("task %d", i)); err != nil {
+			t.Fatalf("Add %d: %v", i, err)
+		}
+		s.Now = func() time.Time { return time.Date(2026, 4, 30, hour, 0, 0, 0, time.UTC) }
+		if _, err := s.Complete(id); err != nil {
+			t.Fatalf("Complete %d: %v", i, err)
+		}
+	}
+
+	tasks, err := s.List(FilterClosed, 3)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(tasks) != 3 {
+		t.Fatalf("len(tasks) = %d; want 3", len(tasks))
+	}
+	if tasks[0].ID != "00000004" {
+		t.Errorf("tasks[0].ID = %q; want 00000004 (most recently completed)", tasks[0].ID)
+	}
+}
+
+func TestList_filterAllReturnsOpenUncappedAndClosedCapped(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	for i := 0; i < 4; i++ {
+		hour := 9 + i
+		s.Now = func() time.Time { return time.Date(2026, 4, 29, hour, 0, 0, 0, time.UTC) }
+		id := fmt.Sprintf("c%07d", i)
+		s.NewID = func() string { return id }
+		if _, err := s.Add(fmt.Sprintf("closed %d", i)); err != nil {
+			t.Fatalf("Add closed %d: %v", i, err)
+		}
+		s.Now = func() time.Time { return time.Date(2026, 4, 30, hour, 0, 0, 0, time.UTC) }
+		if _, err := s.Complete(id); err != nil {
+			t.Fatalf("Complete %d: %v", i, err)
+		}
+	}
+	for i := 0; i < 3; i++ {
+		s.Now = func() time.Time { return time.Date(2026, 5, 1, 9+i, 0, 0, 0, time.UTC) }
+		s.NewID = func() string { return fmt.Sprintf("o%07d", i) }
+		if _, err := s.Add(fmt.Sprintf("open %d", i)); err != nil {
+			t.Fatalf("Add open %d: %v", i, err)
+		}
+	}
+
+	tasks, err := s.List(FilterAll, 2)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	openCount := 0
+	closedCount := 0
+	for _, tk := range tasks {
+		if tk.Completed.IsZero() {
+			openCount++
+		} else {
+			closedCount++
+		}
+	}
+	if openCount != 3 {
+		t.Errorf("openCount = %d; want 3 (open never truncated)", openCount)
+	}
+	if closedCount != 2 {
+		t.Errorf("closedCount = %d; want 2 (closed capped at limit)", closedCount)
+	}
+}
+
+func TestList_filterOpenIgnoresLimit(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	for i := 0; i < 5; i++ {
+		s.Now = func() time.Time { return time.Date(2026, 4, 29, 9+i, 0, 0, 0, time.UTC) }
+		s.NewID = func() string { return fmt.Sprintf("%08d", i) }
+		if _, err := s.Add(fmt.Sprintf("task %d", i)); err != nil {
+			t.Fatalf("Add %d: %v", i, err)
+		}
+	}
+
+	tasks, err := s.List(FilterOpen, 2)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(tasks) != 5 {
+		t.Errorf("len(tasks) = %d; want 5 (open never truncated by limit)", len(tasks))
+	}
+}
+
+func TestUpdate_rewritesFirstBodyLinePreservingFrontmatterFilenameAndRest(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read original: %v", err)
+	}
+	withExtraBody := string(original) + "context line\nmore context\n"
+	if err := os.WriteFile(path, []byte(withExtraBody), 0o644); err != nil {
+		t.Fatalf("seed extra body: %v", err)
+	}
+
+	got, err := s.Update("abcdef12", "buy oat milk")
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if got.ID != "abcdef12" {
+		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		t.Errorf("expected filename to be unchanged at %s: %v", path, err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read after update: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy oat milk\ncontext line\nmore context\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestUpdate_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.Update("nonexistent-zzz", "new description")
+	if err == nil {
+		t.Fatalf("Update: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestAppend_bodyEndingInNewlineGetsTextDirectlyAppended(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	if _, err := s.Append("abcdef12", "extra note\n"); err != nil {
+		t.Fatalf("Append: %v", err)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\nextra note\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestAppend_bodyMissingTrailingNewlineGetsLeadingNewlineInjected(t *testing.T) {
+	dir := t.TempDir()
+	openDir := filepath.Join(dir, "open")
+	if err := os.MkdirAll(openDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	path := filepath.Join(openDir, "2026-04-29T11-30_abcdef12_buy-milk.md")
+	original := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk"
+	if err := os.WriteFile(path, []byte(original), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	s := New(dir)
+	if _, err := s.Append("abcdef12", "extra note\n"); err != nil {
+		t.Fatalf("Append: %v", err)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\nextra note\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestAppend_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.Append("nonexistent-zzz", "anything")
+	if err == nil {
+		t.Fatalf("Append: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestSetResearchMeta_updatesFrontmatterPreservesBody(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	if _, err := s.Append("abcdef12", "extra body context\n"); err != nil {
+		t.Fatalf("Append: %v", err)
+	}
+
+	lastResearched := time.Date(2026, 5, 1, 14, 0, 0, 0, time.UTC)
+	logPath := "research-logs/abcdef12_2026-05-01T14-00.jsonl"
+	if _, err := s.SetResearchMeta("abcdef12", lastResearched, logPath); err != nil {
+		t.Fatalf("SetResearchMeta: %v", err)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n" +
+		"last_researched: 2026-05-01T14:00:00Z\n" +
+		"last_research_log: research-logs/abcdef12_2026-05-01T14-00.jsonl\n" +
+		"---\nbuy milk\nextra body context\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestSetResearchMeta_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.SetResearchMeta("nonexistent-zzz", time.Now(), "ignored")
+	if err == nil {
+		t.Fatalf("SetResearchMeta: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestPath_returnsResolvedFilePath(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.Path("abcdef12")
+	if err != nil {
+		t.Fatalf("Path: %v", err)
+	}
+	want := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	if got != want {
+		t.Errorf("Path = %q; want %q", got, want)
+	}
+}
+
+func TestAdd_freshDirCreatesOpenAndClosed(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "fresh")
+	s := New(dir)
+
+	if _, err := s.Add("anything"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	for _, sub := range []string{"open", "closed"} {
+		info, err := os.Stat(filepath.Join(dir, sub))
+		if err != nil {
+			t.Errorf("expected %s/ to exist: %v", sub, err)
+			continue
+		}
+		if !info.IsDir() {
+			t.Errorf("expected %s/ to be a directory", sub)
+		}
+	}
+}

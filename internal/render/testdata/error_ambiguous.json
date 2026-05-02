@@ -1,0 +1,14 @@
+{
+  "error": "ambiguous",
+  "fragment": "milk",
+  "matches": [
+    {
+      "id": "11111111",
+      "description": "buy milk"
+    },
+    {
+      "id": "22222222",
+      "description": "buy milkshake"
+    }
+  ]
+}

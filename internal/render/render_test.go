@@ -1,0 +1,280 @@
+package render
+
+import (
+	"os"
+	"testing"
+	"time"
+
+	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/worktask/internal/task"
+)
+
+func TestJSONList_matchesSnapshot(t *testing.T) {
+	tasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Body:    "first task\nbody continues here\n",
+		},
+		{
+			ID:      "22222222",
+			Created: time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC),
+			Body:    "second task\n",
+		},
+	}
+
+	got, err := JSONList(tasks)
+	if err != nil {
+		t.Fatalf("JSONList: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/list.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONErrorAmbiguous_matchesSnapshot(t *testing.T) {
+	candidates := []store.Candidate{
+		{ID: "11111111", Description: "buy milk"},
+		{ID: "22222222", Description: "buy milkshake"},
+	}
+	got, err := JSONErrorAmbiguous("milk", candidates)
+	if err != nil {
+		t.Fatalf("JSONErrorAmbiguous: %v", err)
+	}
+	want, err := os.ReadFile("testdata/error_ambiguous.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONErrorNoMatch_matchesSnapshot(t *testing.T) {
+	openTasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Body:    "first task\n",
+		},
+		{
+			ID:      "22222222",
+			Created: time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC),
+			Body:    "second task\n",
+		},
+	}
+	got, err := JSONErrorNoMatch("zzz", openTasks)
+	if err != nil {
+		t.Fatalf("JSONErrorNoMatch: %v", err)
+	}
+	want, err := os.ReadFile("testdata/error_no_match.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONList_mixedOpenAndClosed(t *testing.T) {
+	tasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Body:    "open task\n",
+		},
+		{
+			ID:        "22222222",
+			Created:   time.Date(2026, 4, 28, 10, 0, 0, 0, time.UTC),
+			Completed: time.Date(2026, 4, 30, 12, 0, 0, 0, time.UTC),
+			Body:      "shipped feature\n",
+		},
+	}
+
+	got, err := JSONList(tasks)
+	if err != nil {
+		t.Fatalf("JSONList: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/list_mixed.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchRun_findingsMatchesSnapshot(t *testing.T) {
+	got, err := JSONResearchRun(ResearchRun{
+		ID:          "abcdef12",
+		Description: "buy milk",
+		Status:      "findings",
+		Summary:     "deploy lock",
+		LogPath:     "research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchRun: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_run_findings.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchRun_failedIncludesError(t *testing.T) {
+	got, err := JSONResearchRun(ResearchRun{
+		ID:          "abcdef12",
+		Description: "buy milk",
+		Status:      "failed",
+		Summary:     "claude exited 1",
+		LogPath:     "research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+		Error:       "exec: claude: signal: killed",
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchRun: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_run_failed.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchEvent_taskStartedMatchesSnapshot(t *testing.T) {
+	got, err := JSONResearchEvent(ResearchEvent{
+		Type:        "task_started",
+		ID:          "abcdef12",
+		Description: "buy milk",
+		Started:     time.Date(2026, 5, 1, 14, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchEvent: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_event_task_started.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchEvent_taskDoneMatchesSnapshot(t *testing.T) {
+	got, err := JSONResearchEvent(ResearchEvent{
+		Type:    "task_done",
+		ID:      "abcdef12",
+		Status:  "findings",
+		Summary: "deploy lock",
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchEvent: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_event_task_done.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchEvent_taskFailedMatchesSnapshot(t *testing.T) {
+	got, err := JSONResearchEvent(ResearchEvent{
+		Type:  "task_failed",
+		ID:    "abcdef12",
+		Error: "context deadline exceeded",
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchEvent: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_event_task_failed.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONResearchSummary_matchesSnapshot(t *testing.T) {
+	got, err := JSONResearchSummary(ResearchSummary{
+		BatchID:  "2026-05-01T14:00:00Z",
+		Started:  time.Date(2026, 5, 1, 14, 0, 0, 0, time.UTC),
+		Finished: time.Date(2026, 5, 1, 14, 8, 30, 0, time.UTC),
+		Results: []ResearchSummaryResult{
+			{
+				ID:          "abcdef12",
+				Description: "buy milk",
+				Status:      "findings",
+				Summary:     "deploy lock",
+				LogPath:     "research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+				Tokens:      1234,
+			},
+			{
+				ID:          "fedcba98",
+				Description: "investigate dashboard",
+				Status:      "clarify",
+				Summary:     "what is X",
+				LogPath:     "research-logs/fedcba98_2026-05-01T14-01-00.jsonl",
+				Tokens:      500,
+			},
+			{
+				ID:          "11111111",
+				Description: "datadog hang",
+				Status:      "failed",
+				Summary:     "claude exited 1",
+				LogPath:     "research-logs/11111111_2026-05-01T14-02-00.jsonl",
+				Error:       "exit status 1",
+			},
+		},
+		Totals: ResearchSummaryTotals{
+			Findings: 1,
+			Clarify:  1,
+			Failed:   1,
+			Skipped:  4,
+		},
+	})
+	if err != nil {
+		t.Fatalf("JSONResearchSummary: %v", err)
+	}
+	want, err := os.ReadFile("testdata/research_summary.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONShow_matchesSnapshot(t *testing.T) {
+	tk := task.Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Body:    "buy milk\nremember the brand\n",
+	}
+
+	got, err := JSONShow(tk)
+	if err != nil {
+		t.Fatalf("JSONShow: %v", err)
+	}
+	want, err := os.ReadFile("testdata/show.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}

@@ -1,0 +1,86 @@
+package task
+
+import (
+	"bytes"
+	"fmt"
+	"strings"
+	"time"
+)
+
+type Task struct {
+	ID              string
+	Created         time.Time
+	Completed       time.Time
+	LastResearched  time.Time
+	LastResearchLog string
+	Body            string
+}
+
+const delim = "---\n"
+
+func Encode(t Task) ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteString(delim)
+	fmt.Fprintf(&b, "id: %s\n", t.ID)
+	fmt.Fprintf(&b, "created: %s\n", t.Created.Format(time.RFC3339))
+	if !t.Completed.IsZero() {
+		fmt.Fprintf(&b, "completed: %s\n", t.Completed.Format(time.RFC3339))
+	}
+	if !t.LastResearched.IsZero() {
+		fmt.Fprintf(&b, "last_researched: %s\n", t.LastResearched.Format(time.RFC3339))
+	}
+	if t.LastResearchLog != "" {
+		fmt.Fprintf(&b, "last_research_log: %s\n", t.LastResearchLog)
+	}
+	b.WriteString(delim)
+	b.WriteString(t.Body)
+	return b.Bytes(), nil
+}
+
+func Decode(data []byte) (Task, error) {
+	s := string(data)
+	if !strings.HasPrefix(s, delim) {
+		return Task{}, fmt.Errorf("task: missing leading frontmatter delimiter")
+	}
+	rest := s[len(delim):]
+	end := strings.Index(rest, delim)
+	if end < 0 {
+		return Task{}, fmt.Errorf("task: missing trailing frontmatter delimiter")
+	}
+	header := rest[:end]
+	body := rest[end+len(delim):]
+
+	var t Task
+	for _, line := range strings.Split(strings.TrimRight(header, "\n"), "\n") {
+		key, value, ok := strings.Cut(line, ": ")
+		if !ok {
+			return Task{}, fmt.Errorf("task: malformed frontmatter line %q", line)
+		}
+		switch key {
+		case "id":
+			t.ID = value
+		case "created":
+			parsed, err := time.Parse(time.RFC3339, value)
+			if err != nil {
+				return Task{}, fmt.Errorf("task: parse created: %w", err)
+			}
+			t.Created = parsed
+		case "completed":
+			parsed, err := time.Parse(time.RFC3339, value)
+			if err != nil {
+				return Task{}, fmt.Errorf("task: parse completed: %w", err)
+			}
+			t.Completed = parsed
+		case "last_researched":
+			parsed, err := time.Parse(time.RFC3339, value)
+			if err != nil {
+				return Task{}, fmt.Errorf("task: parse last_researched: %w", err)
+			}
+			t.LastResearched = parsed
+		case "last_research_log":
+			t.LastResearchLog = value
+		}
+	}
+	t.Body = body
+	return t, nil
+}

@@ -1,0 +1,8 @@
+{
+  "id": "abcdef12",
+  "description": "buy milk",
+  "status": "failed",
+  "summary": "claude exited 1",
+  "log_path": "research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+  "error": "exec: claude: signal: killed"
+}
