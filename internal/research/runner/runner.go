@@ -43,108 +43,24 @@ type Command struct {
 	Stdin string
 }
 
-// allowedTools is the explicit read-only allowlist passed to claude via
-// --allowed-tools. Adding or removing a tool is a code review step, not
-// an emergent behavior. Disallowed by omission: Edit, Write, NotebookEdit,
-// TodoWrite, any MCP write method, all Gmail/HubSpot/Calendar tools.
+// allowedTools is the install-agnostic baseline allowlist passed to claude
+// via --allowed-tools. It contains only built-in read-only tools that every
+// install has — no MCPs, no Bash patterns. The shipped binary cannot assume
+// any particular MCP server is installed in the user's environment, so
+// install-specific tool wiring (Slack/Jira/Datadog MCPs, Bash(gh:*) patterns,
+// etc.) is config-owned: users opt in via worktask config, which a
+// follow-up slice will load with validation that rejects bare Bash and any
+// non-`mcp__*`/non-`Bash(...)` entry.
 //
-// Bash is allowed only under explicit subcommand patterns (e.g.
-// Bash(gh issue view:*)); bare Bash is denied. The argv-pattern check
-// in claude is the safety boundary, so any new Bash entry must be a
-// prefix that no write-capable subcommand can match.
-//
-// MCP tool names must be fully qualified as mcp__<server>__<tool>. The
-// bare-name form is silently denied even with --permission-mode=bypassPermissions.
+// Adding a tool here means it must be safe for every install, with no
+// runtime configuration. The bar is "read-only built-in." Any tool that
+// requires user-side setup belongs in config, not here.
 var allowedTools = []string{
-	// Built-in read-only.
 	"Read",
 	"Glob",
 	"Grep",
 	"WebSearch",
 	"WebFetch",
-
-	// Atlassian MCP, read-only subset.
-	"mcp__claude_ai_Atlassian__getJiraIssue",
-	"mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql",
-	"mcp__claude_ai_Atlassian__getJiraIssueRemoteIssueLinks",
-	"mcp__claude_ai_Atlassian__getConfluencePage",
-	"mcp__claude_ai_Atlassian__searchConfluenceUsingCql",
-	"mcp__claude_ai_Atlassian__getConfluencePageDescendants",
-	"mcp__claude_ai_Atlassian__getConfluencePageFooterComments",
-	"mcp__claude_ai_Atlassian__getConfluencePageInlineComments",
-	"mcp__claude_ai_Atlassian__getConfluenceCommentChildren",
-	"mcp__claude_ai_Atlassian__getPagesInConfluenceSpace",
-	"mcp__claude_ai_Atlassian__getConfluenceSpaces",
-	"mcp__claude_ai_Atlassian__getIssueLinkTypes",
-	"mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata",
-	"mcp__claude_ai_Atlassian__getJiraIssueTypeMetaWithFields",
-	"mcp__claude_ai_Atlassian__getTransitionsForJiraIssue",
-	"mcp__claude_ai_Atlassian__getVisibleJiraProjects",
-	"mcp__claude_ai_Atlassian__lookupJiraAccountId",
-	"mcp__claude_ai_Atlassian__atlassianUserInfo",
-	"mcp__claude_ai_Atlassian__getAccessibleAtlassianResources",
-	"mcp__claude_ai_Atlassian__search",
-	"mcp__claude_ai_Atlassian__fetch",
-
-	// Datadog MCP — entirely read-only by design.
-	"mcp__claude_ai_Datadog__aggregate_events",
-	"mcp__claude_ai_Datadog__aggregate_rum_events",
-	"mcp__claude_ai_Datadog__aggregate_spans",
-	"mcp__claude_ai_Datadog__analyze_datadog_logs",
-	"mcp__claude_ai_Datadog__get_datadog_dashboard",
-	"mcp__claude_ai_Datadog__get_datadog_incident",
-	"mcp__claude_ai_Datadog__get_datadog_metric",
-	"mcp__claude_ai_Datadog__get_datadog_metric_context",
-	"mcp__claude_ai_Datadog__get_datadog_notebook",
-	"mcp__claude_ai_Datadog__get_datadog_trace",
-	"mcp__claude_ai_Datadog__search_datadog_dashboards",
-	"mcp__claude_ai_Datadog__search_datadog_events",
-	"mcp__claude_ai_Datadog__search_datadog_hosts",
-	"mcp__claude_ai_Datadog__search_datadog_incidents",
-	"mcp__claude_ai_Datadog__search_datadog_logs",
-	"mcp__claude_ai_Datadog__search_datadog_metrics",
-	"mcp__claude_ai_Datadog__search_datadog_metrics_v2",
-	"mcp__claude_ai_Datadog__search_datadog_monitors",
-	"mcp__claude_ai_Datadog__search_datadog_notebooks",
-	"mcp__claude_ai_Datadog__search_datadog_rum_events",
-	"mcp__claude_ai_Datadog__search_datadog_service_dependencies",
-	"mcp__claude_ai_Datadog__search_datadog_services",
-	"mcp__claude_ai_Datadog__search_datadog_spans",
-
-	// Slack MCP, read-only subset.
-	"mcp__claude_ai_Slack__slack_read_channel",
-	"mcp__claude_ai_Slack__slack_read_thread",
-	"mcp__claude_ai_Slack__slack_read_canvas",
-	"mcp__claude_ai_Slack__slack_read_user_profile",
-	"mcp__claude_ai_Slack__slack_search_channels",
-	"mcp__claude_ai_Slack__slack_search_public",
-	"mcp__claude_ai_Slack__slack_search_public_and_private",
-	"mcp__claude_ai_Slack__slack_search_users",
-
-	// Unblocked MCP — entirely read-only by design.
-	"mcp__unblocked__context_research",
-	"mcp__unblocked__context_get_urls",
-
-	// context7 MCP — library / framework / SDK / CLI documentation
-	// lookups. Read-only by design.
-	"mcp__context7__resolve-library-id",
-	"mcp__context7__query-docs",
-
-	// gh CLI, read-only verbs only. The agent inherits the parent
-	// process's gh auth state. gh's write subcommands (create, edit,
-	// close, merge, comment, delete, review, lock, pin, develop) live
-	// under different verbs, so the prefixes below cannot match them.
-	//
-	// gh api is intentionally NOT on this list. It can issue arbitrary
-	// HTTP methods (gh api -X POST/PATCH/DELETE, or -f field=value which
-	// auto-switches to POST), so the read/write boundary would collapse
-	// to the gh auth token's scopes rather than the argv pattern.
-	"Bash(gh issue view:*)",
-	"Bash(gh issue list:*)",
-	"Bash(gh pr view:*)",
-	"Bash(gh pr list:*)",
-	"Bash(gh pr diff:*)",
-	"Bash(gh search:*)",
 }
 
 // Source cites where an agent claim came from.

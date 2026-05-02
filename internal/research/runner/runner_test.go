@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -79,45 +80,32 @@ func TestBuildCommand_defaultModelIsSonnet(t *testing.T) {
 	}
 }
 
-func TestBuildCommand_allowedToolsContainsExplicitReadOnlyList(t *testing.T) {
+func TestBuildCommand_allowedToolsIsExactlyTheVanillaBaseline(t *testing.T) {
+	// The shipped binary's baseline allowlist is the universal,
+	// install-agnostic set of read-only built-ins. User MCPs and Bash(gh:*)
+	// patterns are config-owned (loaded with validation in a follow-up
+	// slice), not in-source.
 	cmd := BuildCommand(RunInput{Prompt: "x"})
 
 	allowed := allowedToolsFlag(cmd.Args)
 	if allowed == "" {
 		t.Fatalf("Args missing --allowed-tools flag; got %v", cmd.Args)
 	}
-	tools := strings.Split(allowed, ",")
-	set := make(map[string]bool, len(tools))
-	for _, name := range tools {
-		set[name] = true
-	}
+	got := strings.Split(allowed, ",")
 
-	mustHave := []string{
-		"Read", "Glob", "Grep", "WebSearch", "WebFetch",
-		"mcp__claude_ai_Atlassian__getJiraIssue",
-		"mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql",
-		"mcp__claude_ai_Slack__slack_read_thread",
-		"mcp__claude_ai_Slack__slack_search_public",
-		"mcp__unblocked__context_research",
-		"mcp__claude_ai_Datadog__search_datadog_logs",
-		"mcp__context7__resolve-library-id",
-		"mcp__context7__query-docs",
-		// gh CLI, pattern-restricted Bash, read-only verbs only.
-		"Bash(gh issue view:*)",
-		"Bash(gh issue list:*)",
-		"Bash(gh pr view:*)",
-		"Bash(gh pr list:*)",
-		"Bash(gh pr diff:*)",
-		"Bash(gh search:*)",
-	}
-	for _, name := range mustHave {
-		if !set[name] {
-			t.Errorf("allowed-tools missing %q; got %v", name, tools)
-		}
+	want := []string{"Read", "Glob", "Grep", "WebSearch", "WebFetch"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("baseline allowed-tools mismatch:\n got: %v\nwant: %v", got, want)
 	}
 }
 
-func TestBuildCommand_allowedToolsExcludesWriteCapableTools(t *testing.T) {
+func TestBuildCommand_allowedToolsExcludesBuiltInWrites(t *testing.T) {
+	// Safety net against accidental additions to the baseline. The shipped
+	// binary must never grant the agent write-capable built-ins, and must
+	// never grant unrestricted Bash (bare `Bash`) or the wildcard escape
+	// hatch `Bash(*)`. MCP write methods and Bash(gh ...) write verbs are
+	// not enumerated here — they are config-owned and rejected at config
+	// load by the validator in a follow-up slice.
 	cmd := BuildCommand(RunInput{Prompt: "x"})
 
 	allowed := allowedToolsFlag(cmd.Args)
@@ -128,37 +116,16 @@ func TestBuildCommand_allowedToolsExcludesWriteCapableTools(t *testing.T) {
 	}
 
 	mustNotHave := []string{
-		// Unrestricted Bash is denied; only Bash(<pattern>) entries are allowed.
 		"Bash",
-		"Edit", "Write", "NotebookEdit", "TodoWrite",
-		"mcp__claude_ai_Slack__slack_send_message",
-		"mcp__claude_ai_Slack__slack_send_message_draft",
-		"mcp__claude_ai_Slack__slack_create_canvas",
-		"mcp__claude_ai_Atlassian__editJiraIssue",
-		"mcp__claude_ai_Atlassian__createJiraIssue",
-		"mcp__claude_ai_Atlassian__transitionJiraIssue",
-		"mcp__claude_ai_Atlassian__addCommentToJiraIssue",
-		"mcp__claude_ai_Atlassian__updateConfluencePage",
-		"mcp__claude_ai_Atlassian__createConfluencePage",
-		// gh: explicitly forbid the wildcard escape hatch and the
-		// write-capable verbs. gh api can issue arbitrary HTTP methods
-		// (-X POST/PATCH/DELETE), so it is not safe under a glob.
-		"Bash(gh:*)",
-		"Bash(gh api:*)",
-		"Bash(gh issue create:*)",
-		"Bash(gh issue edit:*)",
-		"Bash(gh issue close:*)",
-		"Bash(gh issue comment:*)",
-		"Bash(gh pr create:*)",
-		"Bash(gh pr edit:*)",
-		"Bash(gh pr close:*)",
-		"Bash(gh pr merge:*)",
-		"Bash(gh pr review:*)",
-		"Bash(gh pr comment:*)",
+		"Bash(*)",
+		"Edit",
+		"Write",
+		"NotebookEdit",
+		"TodoWrite",
 	}
 	for _, name := range mustNotHave {
 		if set[name] {
-			t.Errorf("allowed-tools must NOT include write-capable %q", name)
+			t.Errorf("baseline allowed-tools must NOT include write-capable %q", name)
 		}
 	}
 }
