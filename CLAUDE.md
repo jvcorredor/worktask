@@ -10,6 +10,14 @@ Any PR that changes user-visible CLI surface — subcommands, flags, JSON schema
 
 The vendored reference slash command at `docs/src/content/docs/examples/worktask-slash-command.md` is part of that contract. If a JSON schema or error-envelope change requires updating how an agent wraps the CLI, the slash-command file is updated in the same PR as the schema change.
 
+## Local commands
+
+This repo uses `just` as a task runner; install it once with `brew install just` (or your platform's equivalent). Beyond that the only dev dependencies are Go and Yarn.
+
+Run `just --list` to discover the available recipes — every recipe carries a one-line description.
+
+Run `just ci` before opening a Go PR; it runs `fmt-check`, `vet`, and `test` locally so failures surface before pushing.
+
 ## Go source-level docs
 
 Exported Go symbols carry doc comments in the standard Go convention: a complete sentence that begins with the identifier name. Every package has a package doc comment that explains what it does and any contracts (on-disk format, stable schema, side effects).
