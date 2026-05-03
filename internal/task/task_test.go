@@ -2,6 +2,7 @@ package task
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -125,5 +126,81 @@ func TestFormatStability_openTask(t *testing.T) {
 	}
 	if string(encoded) != string(fixture) {
 		t.Errorf("Encode(want) bytes do not match fixture.\n--- got ---\n%s\n--- want ---\n%s", encoded, fixture)
+	}
+}
+
+func TestEncodeOmitsTagsWhenEmpty(t *testing.T) {
+	tk := Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Body:    "buy milk\n",
+	}
+	got, err := Encode(tk)
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	if strings.Contains(string(got), "tags:") {
+		t.Errorf("Encode with no tags should omit tags line, got:\n%s", got)
+	}
+}
+
+func TestEncodeWritesTagsWhenNonEmpty(t *testing.T) {
+	tk := Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Tags:    []string{"bug", "urgent"},
+		Body:    "buy milk\n",
+	}
+	got, err := Encode(tk)
+	if err != nil {
+		t.Fatalf("Encode: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [bug, urgent]\n---\nbuy milk\n"
+	if string(got) != want {
+		t.Errorf("Encode with tags:\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestDecodeParsesTags(t *testing.T) {
+	input := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [bug, urgent]\n---\nbuy milk\n"
+	got, err := Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	if len(got.Tags) != 2 || got.Tags[0] != "bug" || got.Tags[1] != "urgent" {
+		t.Errorf("Tags = %v, want [bug urgent]", got.Tags)
+	}
+}
+
+func TestDecodeNormalizesTagCase(t *testing.T) {
+	input := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [BUG, Urgent]\n---\nbuy milk\n"
+	got, err := Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	if len(got.Tags) != 2 || got.Tags[0] != "bug" || got.Tags[1] != "urgent" {
+		t.Errorf("Tags = %v, want [bug urgent] (normalized)", got.Tags)
+	}
+}
+
+func TestDecodeDropsInvalidTag(t *testing.T) {
+	input := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [bug, no!good, urgent]\n---\nbuy milk\n"
+	got, err := Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	if len(got.Tags) != 2 || got.Tags[0] != "bug" || got.Tags[1] != "urgent" {
+		t.Errorf("Tags = %v, want [bug urgent] (invalid dropped)", got.Tags)
+	}
+}
+
+func TestDecodeDeduplicatesTags(t *testing.T) {
+	input := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [bug, bug, urgent]\n---\nbuy milk\n"
+	got, err := Decode([]byte(input))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	if len(got.Tags) != 2 || got.Tags[0] != "bug" || got.Tags[1] != "urgent" {
+		t.Errorf("Tags = %v, want [bug urgent] (deduplicated)", got.Tags)
 	}
 }

@@ -808,3 +808,132 @@ func TestAdd_freshDirCreatesOpenAndClosed(t *testing.T) {
 		}
 	}
 }
+
+func TestAdd_withTagsWritesTagsInFrontmatter(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+
+	tk, err := s.Add("fix login", "bug", "urgent")
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	if len(tk.Tags) != 2 || tk.Tags[0] != "bug" || tk.Tags[1] != "urgent" {
+		t.Errorf("task.Tags = %v, want [bug urgent]", tk.Tags)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_fix-login.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [bug, urgent]\n---\nfix login\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestAdd_rejectsInvalidTag(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+
+	_, err := s.Add("fix login", "bug!", "urgent")
+	if err == nil {
+		t.Fatalf("Add with invalid tag: expected error")
+	}
+}
+
+func TestAdd_normalizesTagCase(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+
+	tk, err := s.Add("fix login", "BUG", "Urgent")
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	if len(tk.Tags) != 2 || tk.Tags[0] != "bug" || tk.Tags[1] != "urgent" {
+		t.Errorf("task.Tags = %v, want [bug urgent] (normalized)", tk.Tags)
+	}
+}
+
+func TestTagsSurviveClose(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("fix login", "bug", "urgent"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	got, err := s.Close("abcdef12")
+	if err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if len(got.Tags) != 2 || got.Tags[0] != "bug" || got.Tags[1] != "urgent" {
+		t.Errorf("tags after close = %v, want [bug urgent]", got.Tags)
+	}
+}
+
+func TestTagsSurviveReopen(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("fix login", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Close("abcdef12"); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	got, err := s.Reopen("abcdef12")
+	if err != nil {
+		t.Fatalf("Reopen: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "bug" {
+		t.Errorf("tags after reopen = %v, want [bug]", got.Tags)
+	}
+}
+
+func TestTagsSurviveUpdate(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("fix login", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.Update("abcdef12", "fix auth login")
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "bug" {
+		t.Errorf("tags after update = %v, want [bug]", got.Tags)
+	}
+}
+
+func TestTagsSurviveAppend(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("fix login", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.Append("abcdef12", "extra note\n")
+	if err != nil {
+		t.Fatalf("Append: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "bug" {
+		t.Errorf("tags after append = %v, want [bug]", got.Tags)
+	}
+}
