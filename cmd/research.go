@@ -28,6 +28,7 @@ var (
 	researchStale       time.Duration
 	researchTimeout     time.Duration
 	researchModel       string
+	researchTag         string
 )
 
 const (
@@ -40,6 +41,14 @@ var researchCmd = &cobra.Command{
 	Short: "Research one task or sweep every open task via headless claude agents",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 1 && cmd.Flags().Changed("tag") {
+			return fmt.Errorf("--tag is not valid in single-task mode (drop the fragment to sweep all tagged tasks)")
+		}
+		normalizedTag, err := validateResearchTag(researchTag)
+		if err != nil {
+			return err
+		}
+
 		cfg, err := config.Load()
 		if err != nil {
 			return err
@@ -49,7 +58,7 @@ var researchCmd = &cobra.Command{
 		if len(args) == 1 {
 			return runSingleResearch(cmd, cfg, s, args[0])
 		}
-		return runBatchResearch(cmd, cfg, s)
+		return runBatchResearch(cmd, cfg, s, normalizedTag)
 	},
 }
 
@@ -59,6 +68,7 @@ func init() {
 	researchCmd.Flags().DurationVar(&researchStale, "stale", 0, "re-research tasks whose last_researched is older than this duration")
 	researchCmd.Flags().DurationVar(&researchTimeout, "timeout", defaultResearchTimeout, "per-task hard timeout")
 	researchCmd.Flags().StringVar(&researchModel, "model", "", "claude model id for the research agent; overrides config.research_model")
+	researchCmd.Flags().StringVar(&researchTag, "tag", "", "in batch mode, restrict the sweep to open tasks carrying this tag (exact match)")
 	rootCmd.AddCommand(researchCmd)
 }
 
@@ -138,8 +148,8 @@ type itemMeta struct {
 	runStart   time.Time
 }
 
-func runBatchResearch(cmd *cobra.Command, cfg config.Config, s *store.Store) error {
-	openTasks, err := s.List(store.FilterOpen, 0, "")
+func runBatchResearch(cmd *cobra.Command, cfg config.Config, s *store.Store, tagFilter string) error {
+	openTasks, err := s.List(store.FilterOpen, 0, tagFilter)
 	if err != nil {
 		return err
 	}
