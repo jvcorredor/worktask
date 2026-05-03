@@ -81,13 +81,16 @@ In `--format=human`, the rendering is TTY-aware:
 - When stdout is a terminal, the body is rendered as styled Markdown (headings, code blocks, lists, tables) via [glamour](https://github.com/charmbracelet/glamour) using its `auto` style, wrapped at the terminal width capped at 120 columns. A subdued one-line metadata strip — `{id} · {YYYY-MM-DD created} · {open|closed}` — is printed above the body, followed by a second faint line bearing the absolute task file path (no label, no quoting — bare path only). The path line lets a double-click select the whole path cleanly; terminal soft-wrap handles overflow on narrow terminals. Operational fields like `last_researched` and `last_research_log` are intentionally omitted; agents can still get them via `--format=json`. `NO_COLOR` disables colour while preserving layout.
 - When stdout is piped, redirected, or running in a non-TTY environment (CI, scripts), the raw markdown file (frontmatter included) is written verbatim — unchanged and byte-identical to the pre-path-line behaviour — preserving any workflow that pipes `show` output into an editor or other tooling.
 
-In `--format=json`, it prints a JSON object with `id`, `created`, `description`, `body`, `path`, and (if closed) `completed`. `path` is the absolute, cleaned filesystem path of the task file; symlinks in the configured tasks directory are preserved verbatim. JSON output is unchanged by TTY detection.
+In `--format=json`, it prints a JSON object with `id`, `created`, `description`, `body`, `path`, and (if closed) `completed`. When the task has been researched, the object also carries `last_researched` (RFC 3339 UTC) and `last_research_log` (absolute path to the latest run's JSONL log); both are omitted when un-researched. `path` is the absolute, cleaned filesystem path of the task file; symlinks in the configured tasks directory are preserved verbatim. JSON output is unchanged by TTY detection.
 
 ```
 $ worktask show milk
 $ worktask --format=json show abcdef12
-$ worktask --format=json show abcdef12 | jq -r .path  # the file on disk
+$ worktask --format=json show abcdef12 | jq -r .path               # the file on disk
+$ worktask --format=json show abcdef12 | jq -r .last_research_log  # latest research log
 ```
+
+Older releases shipped a dedicated `worktask research-log <fragment>` subcommand that printed only the latest research-log path; it has been removed in favour of the `show --format=json | jq -r .last_research_log` form above. Existing scripts that called `worktask research-log` should switch to that pipeline.
 
 ## `update`
 

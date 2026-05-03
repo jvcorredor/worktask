@@ -1,9 +1,9 @@
 // Package cmd assembles the worktask cobra command tree.
 //
 // The root command lives in this file as rootCmd; each subcommand —
-// add, list, show, close, reopen, edit, update, append,
-// research, research-log — is defined in its own file in this package
-// and attached to rootCmd from that file's init(). Per-command flags,
+// add, list, show, close, reopen, edit, update, append, research —
+// is defined in its own file in this package and attached to rootCmd
+// from that file's init(). Per-command flags,
 // help strings (Cobra's Short and Long), and Run functions are kept
 // next to the command they configure rather than centralised here, so
 // the command tree is built up by package initialisation rather than by

@@ -1,7 +1,7 @@
 ---
 title: Reference slash command
 description: Manage tasks via the worktask CLI
-argument-hint: <add|list|show|close|reopen|update|append|tag|edit|research|research-log> [args...]
+argument-hint: <add|list|show|close|reopen|update|append|tag|edit|research> [args...]
 ---
 
 Manage tasks via the `worktask` CLI. Task state lives in per-task markdown files under the configured XDG data directory; this command never reads, parses, or rewrites `WORKING.md` or any task file directly. The CLI owns ID generation, slug generation, match resolution, and formatting.
@@ -24,7 +24,6 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 | `tag ls` (also `--all`, `--closed`) | `worktask --format=json tag ls [flags]` |
 | `edit <frag>` | see below — do NOT shell out to `worktask edit` |
 | `research [<frag>]` | see "research" below — invokes a background bash, returns an ack, reports back when done |
-| `research-log <frag>` | `worktask research-log "<frag>"` |
 
 Quote each argument as a single token. `<frag>` may be an ID, ID prefix, or description fragment; the CLI resolves it.
 
