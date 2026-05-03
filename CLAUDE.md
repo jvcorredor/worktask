@@ -16,7 +16,7 @@ This repo uses `just` as a task runner; install it once with `brew install just`
 
 Run `just --list` to discover the available recipes — every recipe carries a one-line description.
 
-Run `just ci` before opening a Go PR; it runs `fmt-check`, `vet`, and `test` locally so failures surface before pushing.
+Run `just ci` before opening a Go PR; it runs `fmt-check`, `vet`, `test`, and `test-install` locally so failures surface before pushing.
 
 ## Go source-level docs
 

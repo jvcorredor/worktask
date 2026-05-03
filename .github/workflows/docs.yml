@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - docs/src/**
+      - docs/public/**
       - docs/astro.config.mjs
       - docs/package.json
       - docs/yarn.lock
