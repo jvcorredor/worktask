@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.semrel.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -38,9 +40,35 @@ jobs:
       # flag is silently ignored and breaking changes resume bumping
       # major.
       - name: Run semantic-release
+        id: semrel
         uses: go-semantic-release/action@v1
         with:
           allow-initial-development-versions: true
           hooks: goreleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release guard: if a release was actually cut, fetch the live
+  # install script the same way a real user would, run it, and assert
+  # the resulting binary reports the tag we just published. Any
+  # failure - download error, checksum mismatch, missing binary,
+  # version mismatch - fails the workflow run loudly. Linux x86_64
+  # only by deliberate design (see #28); macOS and arm64 runners are
+  # out of scope for this smoke job.
+  smoke-test:
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install worktask via published install script
+        run: |
+          curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+          printf '%s/.local/bin\n' "$HOME" >>"$GITHUB_PATH"
+
+      - name: Assert installed binary reports the released version
+        env:
+          EXPECTED_VERSION: ${{ needs.release.outputs.version }}
+        run: sh .github/scripts/smoke-test-version.sh
