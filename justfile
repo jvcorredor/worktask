@@ -40,3 +40,7 @@ lint:
 
 # Run the full local CI gate (fmt-check, vet, test) in workflow order
 ci: fmt-check vet test
+
+# Build a local snapshot release with goreleaser into ./dist (no publish)
+release-snapshot:
+    goreleaser release --snapshot --clean
