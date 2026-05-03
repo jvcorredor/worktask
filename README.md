@@ -10,8 +10,15 @@ A Go CLI for task management designed primarily for LLM-agent consumption (Claud
 
 ## Install
 
+### From script
+
 ```
-curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh    # pre-built binary
+curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+```
+
+### From source
+
+```
 go install github.com/jvcorredor/worktask@latest                    # from source
 ```
 
