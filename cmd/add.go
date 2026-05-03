@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +17,7 @@ var addCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "added %s\n", t.ID)
+		cmd.Printf("added %s\n", t.ID)
 		return nil
 	},
 }

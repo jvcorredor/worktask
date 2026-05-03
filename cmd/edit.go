@@ -38,7 +38,7 @@ var editCmd = &cobra.Command{
 			return fmt.Errorf("edit: locate editor %q: %w", fields[0], err)
 		}
 		argv := append(fields, path)
-		fmt.Fprintf(cmd.ErrOrStderr(), "launching %s %s\n", editor, path)
+		cmd.PrintErrf("launching %s %s\n", editor, path)
 		return syscall.Exec(bin, argv, os.Environ())
 	},
 }

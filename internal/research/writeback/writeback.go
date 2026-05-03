@@ -62,7 +62,7 @@ func appendWorklog(path string, when time.Time, summary string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	_, err = f.WriteString(line)
 	return err
 }

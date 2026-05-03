@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +18,7 @@ var appendCmd = &cobra.Command{
 		if err != nil {
 			return handleResolveError(cmd, s, fragment, err)
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "appended to %s\n", t.ID)
+		cmd.Printf("appended to %s\n", t.ID)
 		return nil
 	},
 }
