@@ -12,8 +12,8 @@ import (
 
 // TestListCmd_humanPipeModeIsPlain is the end-to-end pipe-mode test:
 // when stdout is a non-TTY writer (here, *bytes.Buffer), `worktask list`
-// must emit the plain `id  YYYY-MM-DD HH:MM  description\n` rows with
-// no header and no ANSI escapes — the contract callers rely on for
+// must emit the plain `id  YYYY-MM-DD HH:MM  [tags]  description\n` rows
+// with no header and no ANSI escapes — the contract callers rely on for
 // piping into grep, awk, and other text tools.
 func TestListCmd_humanPipeModeIsPlain(t *testing.T) {
 	tmp := t.TempDir()
@@ -66,8 +66,8 @@ func TestListCmd_humanPipeModeIsPlain(t *testing.T) {
 		t.Fatalf("execute list: %v (stderr=%s)", err, stderr.String())
 	}
 
-	want := "11111111  2026-04-29 09:00  first task\n" +
-		"22222222  2026-04-29 10:30  second task with a longer description that would otherwise be truncated in styled mode\n"
+	want := "11111111  2026-04-29 09:00  []  first task\n" +
+		"22222222  2026-04-29 10:30  []  second task with a longer description that would otherwise be truncated in styled mode\n"
 
 	if stdout.String() != want {
 		t.Errorf("list pipe-mode output does not match plain rows.\n--- got ---\n%s\n--- want ---\n%s", stdout.String(), want)

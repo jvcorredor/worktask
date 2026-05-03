@@ -73,6 +73,9 @@ func metadataStrip(t task.Task) string {
 		status = "closed"
 	}
 	line := fmt.Sprintf("%s · %s · %s", t.ID, t.Created.Format("2006-01-02"), status)
+	if len(t.Tags) > 0 {
+		line += " · " + formatTags(t.Tags)
+	}
 	return lipgloss.NewStyle().Faint(true).Render(line)
 }
 
@@ -116,11 +119,11 @@ func humanListStyled(w io.Writer, tasks []task.Task) error {
 		BorderRow(false).
 		BorderHeader(false).
 		Wrap(false).
-		Headers("ID", "CREATED", "DESCRIPTION").
+		Headers("ID", "CREATED", "TAGS", "DESCRIPTION").
 		StyleFunc(func(row, col int) lipgloss.Style {
 			padLeft := 0
 			padRight := 2
-			if col == 2 {
+			if col == 3 {
 				padRight = 0
 			}
 			base := lipgloss.NewStyle().Padding(0, padRight, 0, padLeft)
@@ -137,7 +140,7 @@ func humanListStyled(w io.Writer, tasks []task.Task) error {
 		})
 
 	for _, tk := range tasks {
-		t.Row(tk.ID, tk.Created.Format("2006-01-02"), truncateRunes(description(tk), descBudget))
+		t.Row(tk.ID, tk.Created.Format("2006-01-02"), formatTags(tk.Tags), truncateRunes(description(tk), descBudget))
 	}
 
 	_, err := fmt.Fprintln(w, t.Render())

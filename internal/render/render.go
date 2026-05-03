@@ -19,8 +19,9 @@
 // symlinks in the configured tasks directory are preserved verbatim).
 //
 // Human show rendering: in styled (TTY) mode, HumanShow prints a faint
-// metadata strip, a faint path line (bare absolute path, no label), and
-// a glamour-rendered body. In unstyled (pipe) mode, the raw markdown
+// metadata strip ({id} · {date} · {status} · [{tags}] — bracket segment
+// omitted when no tags), a faint path line (bare absolute path, no label),
+// and a glamour-rendered body. In unstyled (pipe) mode, the raw markdown
 // bytes are written verbatim; the path parameter is accepted but ignored,
 // preserving the pipe-mode round-trip contract.
 //
@@ -307,6 +308,10 @@ func description(t task.Task) string {
 	return body
 }
 
+func formatTags(tags []string) string {
+	return fmt.Sprintf("[%s]", strings.Join(tags, ", "))
+}
+
 // HumanCandidates writes the human-readable disambiguation listing for
 // candidates to w. When styled is false the rendering is byte-identical
 // to today's plain output: "  <id>  <description>\n" per row, with the
@@ -332,7 +337,8 @@ func HumanCandidates(w io.Writer, candidates []store.Candidate, styled bool) err
 
 // HumanList writes one line per task to w. When styled is false the
 // rendering is byte-identical to today's plain output:
-// "<id>  <yyyy-mm-dd hh:mm>  <description>" per row, no header.
+// "<id>  <yyyy-mm-dd hh:mm>  [tag1, tag2]  <description>" per row, no
+// header. Tasks with no tags show "[]" in the tags column.
 // When styled is true callers get a borderless lipgloss table with a
 // header row, accent-coloured IDs, faint dates (date-only), and
 // descriptions hard-truncated to fit the terminal width. Returns the
@@ -342,7 +348,7 @@ func HumanList(w io.Writer, tasks []task.Task, styled bool) error {
 		return humanListStyled(w, tasks)
 	}
 	for _, t := range tasks {
-		if _, err := fmt.Fprintf(w, "%s  %s  %s\n", t.ID, t.Created.Format("2006-01-02 15:04"), description(t)); err != nil {
+		if _, err := fmt.Fprintf(w, "%s  %s  %s  %s\n", t.ID, t.Created.Format("2006-01-02 15:04"), formatTags(t.Tags), description(t)); err != nil {
 			return err
 		}
 	}
