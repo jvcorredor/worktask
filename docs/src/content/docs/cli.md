@@ -22,6 +22,7 @@ worktask append <fragment> <text>
 worktask complete <fragment>
 worktask reopen <fragment>
 worktask edit <fragment>
+worktask research [<fragment>]
 ```
 
 `<fragment>` is anything that resolves to a single task. See [Match resolution](#match-resolution) below.
@@ -105,6 +106,27 @@ $ worktask edit milk
 ```
 
 This command is not usable from an agent shell because it replaces the calling process with the editor. The reference slash command instructs the user to run `worktask edit <id>` from their own shell instead.
+
+## `research`
+
+Spawns a headless Claude Code agent to gather context for one task or sweep every open task. The agent runs unattended with `--permission-mode=bypassPermissions`; the security boundary is the `--allowed-tools` list passed to it.
+
+```
+$ worktask research milk        # research a single task
+$ worktask research              # batch-research every open task
+```
+
+Flags:
+
+- `--concurrency N` (default `3`): max concurrent in-flight research runs in batch mode.
+- `--all`: force re-research of every open task, ignoring `last_researched`.
+- `--stale DURATION`: re-research tasks whose `last_researched` is older than this duration.
+- `--timeout DURATION` (default `10m`): per-task hard timeout.
+- `--model ID`: claude model id; overrides `research_model` from `config.toml`.
+
+The shipped binary's `--allowed-tools` baseline contains five built-in read-only tools and nothing else: `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`. To extend the allowlist with MCP tools or pattern-restricted `Bash(...)` invocations on a per-machine basis, add a [`research_extra_tools`](./config.md#research_extra_tools) block to your `config.toml`. There is no `--extra-tool` flag; tool availability is a per-machine property, not a per-invocation one.
+
+JSON output is documented in [Agentic usage](./agentic.md).
 
 ## Match resolution
 
