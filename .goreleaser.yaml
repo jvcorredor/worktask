@@ -24,7 +24,7 @@ builds:
       - -s -w
       - -X github.com/jvcorredor/worktask/internal/version.Version={{ .Version }}
       - -X github.com/jvcorredor/worktask/internal/version.Commit={{ .FullCommit }}
-      - -X github.com/jvcorredor/worktask/internal/version.Date={{ .CommitDate }}
+      - -X github.com/jvcorredor/worktask/internal/version.Date={{ .Date }}
 
 archives:
   - id: worktask
