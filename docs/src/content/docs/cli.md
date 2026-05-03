@@ -5,11 +5,13 @@ description: Subcommand reference for the worktask CLI — flags, examples, and 
 
 Every subcommand `worktask` exposes is documented on this page. For the on-disk shape of task files, see [File & storage format](./storage.md). For JSON output and error envelopes, see [Agentic usage](./agentic.md).
 
-## Global flag
+## Global flags
 
 `--format=human|json` (default `human`).
 
 JSON output is intended for agentic consumers; the schema is documented as stable. Human output is the default and is what you see when running `worktask` directly in a terminal.
+
+`--version` (alias `-v`) prints the binary's version on a single line and exits — see the [`version`](#version) subcommand below for the underlying resolution rules.
 
 ## Subcommands at a glance
 
@@ -23,6 +25,7 @@ worktask complete <fragment>
 worktask reopen <fragment>
 worktask edit <fragment>
 worktask research [<fragment>]
+worktask version
 ```
 
 `<fragment>` is anything that resolves to a single task. See [Match resolution](#match-resolution) below.
@@ -141,6 +144,25 @@ Flags:
 The shipped binary's `--allowed-tools` baseline contains five built-in read-only tools and nothing else: `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`. To extend the allowlist with MCP tools or pattern-restricted `Bash(...)` invocations on a per-machine basis, add a [`research_extra_tools`](./config.md#research_extra_tools) block to your `config.toml`. There is no `--extra-tool` flag; tool availability is a per-machine property, not a per-invocation one.
 
 JSON output is documented in [Agentic usage](./agentic.md).
+
+## `version`
+
+Prints the binary's build identity. The same identity is what `worktask --version` and `worktask -v` report on a single line via cobra's built-in version flag.
+
+```
+$ worktask version
+worktask v1.2.3 (commit abcdef1, built 2026-05-03T10:00:00Z)
+
+$ worktask --format=json version
+{
+  "version": "v1.2.3",
+  "commit": "abcdef1",
+  "date": "2026-05-03T10:00:00Z",
+  "source": "ldflags"
+}
+```
+
+The JSON schema is `{"version": string, "commit": string, "date": string, "source": string}`. The `source` field records which resolution branch produced the values: `"ldflags"` for release builds with `-ldflags="-X ..."`, `"buildinfo"` for binaries produced by `go install module@version` (where the version is read from the Go module proxy via `runtime/debug.ReadBuildInfo`), and `"default"` for unannotated developer builds (which report `"version": "dev"`).
 
 ## Match resolution
 
