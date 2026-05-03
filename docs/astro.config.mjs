@@ -21,6 +21,7 @@ export default defineConfig({
           label: 'Getting started',
           items: [
             { label: 'Index', slug: 'index' },
+            { label: 'Install', slug: 'install' },
             { label: 'CLI reference', slug: 'cli' },
           ],
         },
@@ -30,6 +31,7 @@ export default defineConfig({
             { label: 'File & storage format', slug: 'storage' },
             { label: 'Configuration', slug: 'config' },
             { label: 'Agentic usage', slug: 'agentic' },
+            { label: 'Releases', slug: 'releases' },
           ],
         },
         {

@@ -31,3 +31,6 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+      - name: Test install.sh
+        run: sh tests/install/run.sh

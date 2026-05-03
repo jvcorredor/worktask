@@ -10,6 +10,10 @@ build:
 test:
     go test ./...
 
+# Run the docs/public/install.sh test harness (POSIX shell, mocked curl)
+test-install:
+    sh tests/install/run.sh
+
 # Run go vet across all packages
 vet:
     go vet ./...
@@ -38,8 +42,8 @@ docs-build:
 lint:
     @echo "lint is not yet implemented; see https://github.com/jvcorredor/worktask/issues/10" >&2; exit 1
 
-# Run the full local CI gate (fmt-check, vet, test) in workflow order
-ci: fmt-check vet test
+# Run the full local CI gate (fmt-check, vet, test, test-install) in workflow order
+ci: fmt-check vet test test-install
 
 # Build a local snapshot release with goreleaser into ./dist (no publish)
 release-snapshot:
