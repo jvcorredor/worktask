@@ -58,7 +58,14 @@ $ worktask list --closed --limit 50
 
 ## `show`
 
-Prints a single task. In `--format=human`, it prints the raw markdown file. In `--format=json`, it prints a JSON object with `id`, `created`, `description`, `body`, and (if closed) `completed`.
+Prints a single task.
+
+In `--format=human`, the rendering is TTY-aware:
+
+- When stdout is a terminal, the body is rendered as styled Markdown (headings, code blocks, lists, tables) via [glamour](https://github.com/charmbracelet/glamour) using its `auto` style, wrapped at the terminal width capped at 120 columns. A subdued one-line metadata strip — `{id} · {YYYY-MM-DD created} · {open|closed}` — is printed above the body. Operational fields like `last_researched` and `last_research_log` are intentionally omitted; agents can still get them via `--format=json`. `NO_COLOR` disables colour while preserving layout.
+- When stdout is piped, redirected, or running in a non-TTY environment (CI, scripts), the raw markdown file (frontmatter included) is written verbatim, preserving any workflow that pipes `show` output into an editor or other tooling.
+
+In `--format=json`, it prints a JSON object with `id`, `created`, `description`, `body`, and (if closed) `completed`. JSON output is unchanged by TTY detection.
 
 ```
 $ worktask show milk

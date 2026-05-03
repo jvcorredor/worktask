@@ -8,6 +8,7 @@ import (
 
 	"github.com/jvcorredor/worktask/internal/render"
 	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/worktask/internal/tty"
 )
 
 var showCmd = &cobra.Command{
@@ -35,8 +36,8 @@ var showCmd = &cobra.Command{
 			_, err = cmd.OutOrStdout().Write(data)
 			return err
 		case formatHuman:
-			_, err := cmd.OutOrStdout().Write(raw)
-			return err
+			out := cmd.OutOrStdout()
+			return render.HumanShow(out, t, raw, tty.IsTerminal(out))
 		default:
 			return fmt.Errorf("unknown format: %s", format)
 		}

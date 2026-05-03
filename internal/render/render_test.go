@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"os"
 	"testing"
 	"time"
@@ -256,6 +257,47 @@ func TestJSONResearchSummary_matchesSnapshot(t *testing.T) {
 	}
 	if string(got) != string(want) {
 		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestHumanShow_unstyledOpenTaskPassesRawThrough(t *testing.T) {
+	raw, err := os.ReadFile("testdata/show_open.md")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	tk, err := task.Decode(raw)
+	if err != nil {
+		t.Fatalf("task.Decode: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := HumanShow(&buf, tk, raw, false); err != nil {
+		t.Fatalf("HumanShow: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), raw) {
+		t.Errorf("HumanShow unstyled output does not match raw input.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), raw)
+	}
+}
+
+func TestHumanShow_unstyledClosedTaskPassesRawThrough(t *testing.T) {
+	raw, err := os.ReadFile("testdata/show_closed.md")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	tk, err := task.Decode(raw)
+	if err != nil {
+		t.Fatalf("task.Decode: %v", err)
+	}
+	if tk.Completed.IsZero() {
+		t.Fatalf("snapshot must represent a closed task; Completed is zero")
+	}
+
+	var buf bytes.Buffer
+	if err := HumanShow(&buf, tk, raw, false); err != nil {
+		t.Fatalf("HumanShow: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), raw) {
+		t.Errorf("HumanShow unstyled output does not match raw input.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), raw)
 	}
 }
 
