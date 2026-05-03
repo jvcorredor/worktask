@@ -17,7 +17,7 @@ JSON output is intended for agentic consumers; the schema is documented as stabl
 
 ```
 worktask add <description>
-worktask list [--all] [--closed] [--limit N]
+worktask list [--all] [--closed] [--limit N] [--tag TAG]
 worktask show <fragment>
 worktask update <fragment> <new description>
 worktask append <fragment> <text>
@@ -55,11 +55,14 @@ Flags:
 - `--all` includes closed tasks (truncated to the most recent 20).
 - `--closed` shows closed tasks only.
 - `--limit N` overrides the truncation.
+- `--tag TAG` filters to tasks carrying the tag (single value, exact match after lowercase normalization). Composes as logical AND with `--all`/`--closed`. A non-matching tag returns an empty list with no error; an invalid tag value (whitespace, uppercase that doesn't normalize cleanly, characters outside `[a-z0-9-]`) is rejected.
 
 ```
 $ worktask list
 $ worktask list --all
 $ worktask list --closed --limit 50
+$ worktask list --tag bug
+$ worktask list --tag infra --all
 ```
 
 In `--format=human`, the rendering is TTY-aware:

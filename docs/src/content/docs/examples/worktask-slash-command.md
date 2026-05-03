@@ -13,7 +13,7 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 | Subcommand | Shell |
 |---|---|
 | `add <description>` | `worktask --format=json add "<description>"` |
-| `list` (also `--all`, `--closed`, `--limit N`) | `worktask --format=json list [flags]` |
+| `list` (also `--all`, `--closed`, `--limit N`, `--tag TAG`) | `worktask --format=json list [flags]` |
 | `show <frag>` | `worktask --format=json show "<frag>"` |
 | `close <frag>` | `worktask --format=json close "<frag>"` |
 | `reopen <frag>` | `worktask --format=json reopen "<frag>"` |

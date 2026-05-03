@@ -139,7 +139,7 @@ type itemMeta struct {
 }
 
 func runBatchResearch(cmd *cobra.Command, cfg config.Config, s *store.Store) error {
-	openTasks, err := s.List(store.FilterOpen, 0)
+	openTasks, err := s.List(store.FilterOpen, 0, "")
 	if err != nil {
 		return err
 	}
