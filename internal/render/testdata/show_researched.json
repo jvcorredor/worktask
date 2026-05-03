@@ -1,0 +1,10 @@
+{
+  "id": "abcdef12",
+  "created": "2026-04-29T11:30:00Z",
+  "description": "buy milk",
+  "tags": [],
+  "body": "buy milk\nremember the brand\n",
+  "path": "/tasks/open/2026-04-29T11-30_abcdef12_buy-milk.md",
+  "last_researched": "2026-05-01T14:00:00Z",
+  "last_research_log": "/tasks/research-logs/abcdef12_2026-05-01T14-00-00.jsonl"
+}
