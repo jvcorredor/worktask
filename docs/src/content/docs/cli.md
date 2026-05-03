@@ -24,6 +24,8 @@ worktask append <fragment> <text>
 worktask close <fragment>
 worktask reopen <fragment>
 worktask edit <fragment>
+worktask tag add <fragment> <tag>
+worktask tag rm <fragment> <tag>
 worktask research [<fragment>]
 worktask version
 ```
@@ -113,6 +115,24 @@ The inverse of `close`: moves the file back to `open/` and clears the `completed
 
 ```
 $ worktask reopen milk
+```
+
+## `tag add`
+
+Adds a tag to an existing task. The tag is normalized (lower-cased, trimmed) and validated against `[a-z0-9-]` up to 40 characters. Re-running with the same tag is a no-op.
+
+```
+$ worktask tag add milk urgent
+tagged abcdef12 with urgent
+```
+
+## `tag rm`
+
+Removes a tag from an existing task. Re-running with an absent tag is a no-op. When the last tag is removed, the `tags:` frontmatter line is omitted entirely.
+
+```
+$ worktask tag rm milk urgent
+removed urgent from abcdef12
 ```
 
 ## `edit`
