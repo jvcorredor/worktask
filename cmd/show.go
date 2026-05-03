@@ -22,14 +22,14 @@ var showCmd = &cobra.Command{
 			return err
 		}
 
-		t, raw, err := s.Get(fragment)
+		t, raw, path, err := s.Get(fragment)
 		if err != nil {
 			return handleResolveError(cmd, s, fragment, err)
 		}
 
 		switch format {
 		case formatJSON:
-			data, err := render.JSONShow(t)
+			data, err := render.JSONShow(t, path)
 			if err != nil {
 				return err
 			}

@@ -22,7 +22,7 @@ var researchLogCmd = &cobra.Command{
 		}
 		s := store.New(cfg.TasksDir)
 
-		t, _, err := s.Get(fragment)
+		t, _, _, err := s.Get(fragment)
 		if err != nil {
 			return handleResolveError(cmd, s, fragment, err)
 		}

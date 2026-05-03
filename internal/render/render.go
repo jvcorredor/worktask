@@ -13,7 +13,9 @@
 //	]
 //
 // JSON show schema (stable): same fields as the list element plus "body"
-// (full task body, including the canonical first line as "description").
+// (full task body, including the canonical first line as "description")
+// and "path" (absolute, cleaned filesystem path of the task file;
+// symlinks in the configured tasks directory are preserved verbatim).
 //
 // JSON research-run schema (stable): per-task summary line emitted on stdout
 // when `worktask research <hash>` completes.
@@ -50,6 +52,7 @@ type jsonTask struct {
 type jsonShowTask struct {
 	jsonTask
 	Body string `json:"body"`
+	Path string `json:"path"`
 }
 
 type jsonMatch struct {
@@ -246,9 +249,10 @@ func marshalLine(v any) ([]byte, error) {
 }
 
 // JSONShow renders a single task in the show schema described in the
-// package documentation: the list-element fields plus the full body.
-func JSONShow(t task.Task) ([]byte, error) {
-	return marshalIndent(jsonShowTask{jsonTask: toJSONTask(t), Body: t.Body})
+// package documentation: the list-element fields plus the full body
+// and the absolute filesystem path of the task file.
+func JSONShow(t task.Task, path string) ([]byte, error) {
+	return marshalIndent(jsonShowTask{jsonTask: toJSONTask(t), Body: t.Body, Path: path})
 }
 
 // JSONList renders tasks as the stable list-element schema described

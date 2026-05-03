@@ -63,7 +63,7 @@ func init() {
 }
 
 func runSingleResearch(cmd *cobra.Command, cfg config.Config, s *store.Store, fragment string) error {
-	t, _, err := s.Get(fragment)
+	t, _, _, err := s.Get(fragment)
 	if err != nil {
 		return handleResolveError(cmd, s, fragment, err)
 	}

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -184,5 +185,68 @@ func TestShowCmd_humanNoMatchPipeModeIsPlain(t *testing.T) {
 	}
 	if bytes.ContainsRune(stderr.Bytes(), '\x1b') {
 		t.Errorf("no-match pipe-mode stderr must not contain ANSI escapes, got %q", stderr.String())
+	}
+}
+
+// TestShowCmd_jsonIncludesAbsolutePath asserts that `worktask show --format=json`
+// emits a top-level `path` field whose value is the absolute filesystem path
+// of the resolved task file. The test seeds an open-task file on disk, runs
+// `show <id> --format=json`, and parses the stdout JSON to compare `path`
+// against the path the test wrote to.
+func TestShowCmd_jsonIncludesAbsolutePath(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "config"))
+
+	tk := task.Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Body:    "buy milk\nremember the brand\n",
+	}
+	raw, err := task.Encode(tk)
+	if err != nil {
+		t.Fatalf("task.Encode: %v", err)
+	}
+	openDir := filepath.Join(tmp, "worktask", "open")
+	if err := os.MkdirAll(openDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	wantPath := filepath.Join(openDir, "abcdef12-buy-milk.md")
+	if err := os.WriteFile(wantPath, raw, 0o644); err != nil {
+		t.Fatalf("write task file: %v", err)
+	}
+
+	prevFormat := format
+	format = formatJSON
+	t.Cleanup(func() { format = prevFormat })
+
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	rootCmd.SetArgs([]string{"show", "abcdef12"})
+	t.Cleanup(func() {
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+		rootCmd.SetArgs(nil)
+	})
+
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("execute show: %v (stderr=%s)", err, stderr.String())
+	}
+
+	var got struct {
+		Path string `json:"path"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &got); err != nil {
+		t.Fatalf("parse JSON: %v\nstdout=%s", err, stdout.String())
+	}
+	if got.Path == "" {
+		t.Fatalf("expected `path` field in JSON output, got %s", stdout.String())
+	}
+	if !filepath.IsAbs(got.Path) {
+		t.Errorf("`path` = %q; want an absolute path", got.Path)
+	}
+	if got.Path != wantPath {
+		t.Errorf("`path` = %q; want %q", got.Path, wantPath)
 	}
 }
