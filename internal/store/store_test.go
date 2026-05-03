@@ -73,7 +73,7 @@ func TestList_returnsOpenTasksInChronologicalOrder(t *testing.T) {
 		t.Fatalf("Add second: %v", err)
 	}
 
-	tasks, err := s.List(FilterOpen, 0)
+	tasks, err := s.List(FilterOpen, 0, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -444,7 +444,7 @@ func TestList_filterClosedSortsByCompletedDescending(t *testing.T) {
 		t.Fatalf("Close second: %v", err)
 	}
 
-	tasks, err := s.List(FilterClosed, 20)
+	tasks, err := s.List(FilterClosed, 20, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -476,7 +476,7 @@ func TestList_filterClosedHonorsLimit(t *testing.T) {
 		}
 	}
 
-	tasks, err := s.List(FilterClosed, 3)
+	tasks, err := s.List(FilterClosed, 3, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -512,7 +512,7 @@ func TestList_filterAllReturnsOpenUncappedAndClosedCapped(t *testing.T) {
 		}
 	}
 
-	tasks, err := s.List(FilterAll, 2)
+	tasks, err := s.List(FilterAll, 2, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -544,12 +544,127 @@ func TestList_filterOpenIgnoresLimit(t *testing.T) {
 		}
 	}
 
-	tasks, err := s.List(FilterOpen, 2)
+	tasks, err := s.List(FilterOpen, 2, "")
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
 	if len(tasks) != 5 {
 		t.Errorf("len(tasks) = %d; want 5 (open never truncated by limit)", len(tasks))
+	}
+}
+
+func TestList_tagFilterNarrowsToTaggedTasks(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("first", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("second", "infra"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "33333333" }
+	if _, err := s.Add("third", "bug", "infra"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.List(FilterOpen, 0, "bug")
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d; want 2 (only tasks tagged 'bug')", len(got))
+	}
+	for _, tk := range got {
+		hasBug := false
+		for _, tg := range tk.Tags {
+			if tg == "bug" {
+				hasBug = true
+			}
+		}
+		if !hasBug {
+			t.Errorf("returned task %s lacks 'bug' tag (tags=%v)", tk.ID, tk.Tags)
+		}
+	}
+}
+
+func TestList_tagFilterReturnsEmptyForNoMatch(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("only", "infra"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.List(FilterOpen, 0, "nonexistent")
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("len(got) = %d; want 0 (non-matching tag should return empty list, no error)", len(got))
+	}
+}
+
+func TestList_tagFilterComposesAcrossOpenAndClosed(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("open-bug", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("closed-bug", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Close("22222222"); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "33333333" }
+	if _, err := s.Add("infra-only", "infra"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.List(FilterAll, 0, "bug")
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("len(got) = %d; want 2 (one open + one closed bug)", len(got))
+	}
+}
+
+func TestList_emptyTagFilterIsNoOp(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("untagged"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("tagged", "bug"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.List(FilterOpen, 0, "")
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got) != 2 {
+		t.Errorf("len(got) = %d; want 2 (empty tag must not filter)", len(got))
 	}
 }
 
@@ -1136,5 +1251,132 @@ func TestRemoveTag_zeroMatchReturnsTypedError(t *testing.T) {
 	var nm *ErrNoMatch
 	if !errors.As(err, &nm) {
 		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestListTags_emptyCorpusReturnsEmpty(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	got, err := s.ListTags(FilterOpen)
+	if err != nil {
+		t.Fatalf("ListTags: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("ListTags on empty corpus = %v; want empty", got)
+	}
+}
+
+func TestListTags_filterScopesWhichTasksAreScanned(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("open task", "open-only", "shared"); err != nil {
+		t.Fatalf("Add open: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("closed task", "closed-only", "shared"); err != nil {
+		t.Fatalf("Add closed: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
+	if _, err := s.Close("22222222"); err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+
+	openTags, err := s.ListTags(FilterOpen)
+	if err != nil {
+		t.Fatalf("ListTags(FilterOpen): %v", err)
+	}
+	if got := tagNames(openTags); !equalStrings(got, []string{"open-only", "shared"}) {
+		t.Errorf("FilterOpen tag names = %v; want [open-only shared]", got)
+	}
+
+	closedTags, err := s.ListTags(FilterClosed)
+	if err != nil {
+		t.Fatalf("ListTags(FilterClosed): %v", err)
+	}
+	if got := tagNames(closedTags); !equalStrings(got, []string{"closed-only", "shared"}) {
+		t.Errorf("FilterClosed tag names = %v; want [closed-only shared]", got)
+	}
+
+	allTags, err := s.ListTags(FilterAll)
+	if err != nil {
+		t.Fatalf("ListTags(FilterAll): %v", err)
+	}
+	gotAll := map[string]int{}
+	for _, tc := range allTags {
+		gotAll[tc.Name] = tc.Count
+	}
+	wantAll := map[string]int{"open-only": 1, "closed-only": 1, "shared": 2}
+	for k, v := range wantAll {
+		if gotAll[k] != v {
+			t.Errorf("FilterAll count[%q] = %d; want %d (full=%v)", k, gotAll[k], v, allTags)
+		}
+	}
+	if len(allTags) != len(wantAll) {
+		t.Errorf("FilterAll len = %d; want %d", len(allTags), len(wantAll))
+	}
+}
+
+func tagNames(tcs []TagCount) []string {
+	out := make([]string, 0, len(tcs))
+	for _, tc := range tcs {
+		out = append(out, tc.Name)
+	}
+	return out
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestListTags_returnsDistinctTagsWithCountsSortedByName(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("first", "infra", "urgent"); err != nil {
+		t.Fatalf("Add first: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("second", "infra", "bug"); err != nil {
+		t.Fatalf("Add second: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "33333333" }
+	if _, err := s.Add("third", "infra"); err != nil {
+		t.Fatalf("Add third: %v", err)
+	}
+
+	got, err := s.ListTags(FilterOpen)
+	if err != nil {
+		t.Fatalf("ListTags: %v", err)
+	}
+
+	want := []TagCount{
+		{Name: "bug", Count: 1},
+		{Name: "infra", Count: 3},
+		{Name: "urgent", Count: 1},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("len(got) = %d; want %d (got=%v)", len(got), len(want), got)
+	}
+	for i, w := range want {
+		if got[i] != w {
+			t.Errorf("got[%d] = %v; want %v", i, got[i], w)
+		}
 	}
 }

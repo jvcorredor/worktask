@@ -70,7 +70,7 @@ func handleResolveError(cmd *cobra.Command, s *store.Store, fragment string, err
 		}
 		return errExit
 	case errors.As(err, &nm):
-		openTasks, lerr := s.List(store.FilterOpen, 0)
+		openTasks, lerr := s.List(store.FilterOpen, 0, "")
 		if lerr != nil {
 			return lerr
 		}

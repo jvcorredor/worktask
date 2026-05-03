@@ -274,6 +274,26 @@ func JSONList(tasks []task.Task) ([]byte, error) {
 	return marshalIndent(out)
 }
 
+type jsonTagCount struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+type jsonTagList struct {
+	Tags []jsonTagCount `json:"tags"`
+}
+
+// JSONTagList renders the tag-list envelope: {"tags": [{"name": ...,
+// "count": ...}, ...]}. The tags key is always present; an empty input
+// renders as an empty array, never null.
+func JSONTagList(tagCounts []store.TagCount) ([]byte, error) {
+	out := make([]jsonTagCount, 0, len(tagCounts))
+	for _, tc := range tagCounts {
+		out = append(out, jsonTagCount{Name: tc.Name, Count: tc.Count})
+	}
+	return marshalIndent(jsonTagList{Tags: out})
+}
+
 func marshalIndent(v any) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
@@ -333,6 +353,21 @@ func HumanCandidates(w io.Writer, candidates []store.Candidate, styled bool) err
 		}
 	}
 	return nil
+}
+
+// HumanTagList writes a single line of "name (count)" entries separated
+// by two spaces to w, terminated with a newline. An empty input emits a
+// blank line. The styled flag is accepted for parity with sibling
+// renderers; output is byte-identical in both modes (no table layout).
+// Returns the first write error encountered.
+func HumanTagList(w io.Writer, tagCounts []store.TagCount, styled bool) error {
+	_ = styled
+	parts := make([]string, 0, len(tagCounts))
+	for _, tc := range tagCounts {
+		parts = append(parts, fmt.Sprintf("%s (%d)", tc.Name, tc.Count))
+	}
+	_, err := fmt.Fprintln(w, strings.Join(parts, "  "))
+	return err
 }
 
 // HumanList writes one line per task to w. When styled is false the

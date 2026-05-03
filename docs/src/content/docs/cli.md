@@ -17,7 +17,7 @@ JSON output is intended for agentic consumers; the schema is documented as stabl
 
 ```
 worktask add <description>
-worktask list [--all] [--closed] [--limit N]
+worktask list [--all] [--closed] [--limit N] [--tag TAG]
 worktask show <fragment>
 worktask update <fragment> <new description>
 worktask append <fragment> <text>
@@ -26,6 +26,7 @@ worktask reopen <fragment>
 worktask edit <fragment>
 worktask tag add <fragment> <tag>
 worktask tag rm <fragment> <tag>
+worktask tag ls [--all] [--closed]
 worktask research [<fragment>]
 worktask version
 ```
@@ -54,11 +55,14 @@ Flags:
 - `--all` includes closed tasks (truncated to the most recent 20).
 - `--closed` shows closed tasks only.
 - `--limit N` overrides the truncation.
+- `--tag TAG` filters to tasks carrying the tag (single value, exact match after lowercase normalization). Composes as logical AND with `--all`/`--closed`. A non-matching tag returns an empty list with no error; an invalid tag value (whitespace, uppercase that doesn't normalize cleanly, characters outside `[a-z0-9-]`) is rejected.
 
 ```
 $ worktask list
 $ worktask list --all
 $ worktask list --closed --limit 50
+$ worktask list --tag bug
+$ worktask list --tag infra --all
 ```
 
 In `--format=human`, the rendering is TTY-aware:
@@ -133,6 +137,37 @@ Removes a tag from an existing task. Re-running with an absent tag is a no-op. W
 ```
 $ worktask tag rm milk urgent
 removed urgent from abcdef12
+```
+
+## `tag ls`
+
+Reports each distinct tag in the corpus along with the count of tasks carrying it, sorted alphabetically by tag name. Tags with zero occurrences never appear — the listing is derived from task files; tags are not pre-registered.
+
+Flags:
+
+- `--all` includes closed tasks alongside open.
+- `--closed` scans closed tasks only.
+
+Default is open tasks only — same semantics as [`list`](#list).
+
+In `--format=human`, output is a single space-padded line of `name (count)` entries, no header, no ANSI escapes. An empty corpus emits a blank line.
+
+```
+$ worktask tag ls
+bug (3)  infra (5)  urgent (2)
+```
+
+In `--format=json`, output is `{"tags": [{"name": ..., "count": ...}, ...]}`. The `tags` key is always present (empty array when none) so consumers can `jq '.tags'` without null-checking.
+
+```
+$ worktask --format=json tag ls
+{
+  "tags": [
+    {"name": "bug",    "count": 3},
+    {"name": "infra",  "count": 5},
+    {"name": "urgent", "count": 2}
+  ]
+}
 ```
 
 ## `edit`

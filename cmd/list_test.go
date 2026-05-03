@@ -10,6 +10,91 @@ import (
 	"github.com/jvcorredor/worktask/internal/task"
 )
 
+// TestListCmd_tagFlagFiltersToTaggedTasks is the end-to-end test for
+// `worktask list --tag bug`: only tasks with that tag appear; uppercase
+// is normalized.
+func TestListCmd_tagFlagFiltersToTaggedTasks(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "config"))
+
+	openDir := filepath.Join(tmp, "worktask", "open")
+	if err := os.MkdirAll(openDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	tasks := []task.Task{
+		{ID: "11111111", Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC), Tags: []string{"bug"}, Body: "first\n"},
+		{ID: "22222222", Created: time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC), Tags: []string{"infra"}, Body: "second\n"},
+	}
+	for _, tk := range tasks {
+		raw, err := task.Encode(tk)
+		if err != nil {
+			t.Fatalf("Encode: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(openDir, tk.ID+".md"), raw, 0o644); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}
+
+	prevFormat := format
+	format = formatHuman
+	t.Cleanup(func() {
+		format = prevFormat
+		listTag = ""
+	})
+
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	rootCmd.SetArgs([]string{"list", "--tag", "BUG"})
+	t.Cleanup(func() {
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+		rootCmd.SetArgs(nil)
+	})
+
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("execute list --tag: %v (stderr=%s)", err, stderr.String())
+	}
+
+	want := "11111111  2026-04-29 09:00  [bug]  first\n"
+	if stdout.String() != want {
+		t.Errorf("list --tag output mismatch.\n--- got ---\n%q\n--- want ---\n%q", stdout.String(), want)
+	}
+}
+
+// TestListCmd_tagFlagInvalidValueErrors verifies that an invalid tag
+// (per tag.Validate) is rejected with a clear error before any task is
+// loaded.
+func TestListCmd_tagFlagInvalidValueErrors(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "config"))
+
+	prevFormat := format
+	format = formatHuman
+	t.Cleanup(func() {
+		format = prevFormat
+		listTag = ""
+	})
+
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	rootCmd.SetArgs([]string{"list", "--tag", "bad tag"})
+	t.Cleanup(func() {
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+		rootCmd.SetArgs(nil)
+	})
+
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatalf("list --tag 'bad tag': expected error, got nil (stdout=%s)", stdout.String())
+	}
+}
+
 // TestListCmd_humanPipeModeIsPlain is the end-to-end pipe-mode test:
 // when stdout is a non-TTY writer (here, *bytes.Buffer), `worktask list`
 // must emit the plain `id  YYYY-MM-DD HH:MM  [tags]  description\n` rows

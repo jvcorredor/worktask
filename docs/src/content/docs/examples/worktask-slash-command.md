@@ -13,7 +13,7 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 | Subcommand | Shell |
 |---|---|
 | `add <description>` | `worktask --format=json add "<description>"` |
-| `list` (also `--all`, `--closed`, `--limit N`) | `worktask --format=json list [flags]` |
+| `list` (also `--all`, `--closed`, `--limit N`, `--tag TAG`) | `worktask --format=json list [flags]` |
 | `show <frag>` | `worktask --format=json show "<frag>"` |
 | `close <frag>` | `worktask --format=json close "<frag>"` |
 | `reopen <frag>` | `worktask --format=json reopen "<frag>"` |
@@ -21,6 +21,7 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 | `append <frag> <text>` | `worktask --format=json append "<frag>" "<text>"` |
 | `tag add <frag> <tag>` | `worktask tag add "<frag>" "<tag>"` |
 | `tag rm <frag> <tag>` | `worktask tag rm "<frag>" "<tag>"` |
+| `tag ls` (also `--all`, `--closed`) | `worktask --format=json tag ls [flags]` |
 | `edit <frag>` | see below — do NOT shell out to `worktask edit` |
 | `research [<frag>]` | see "research" below — invokes a background bash, returns an ack, reports back when done |
 | `research-log <frag>` | `worktask research-log "<frag>"` |
@@ -39,7 +40,7 @@ When the CLI exits non-zero, parse stdout as JSON and branch on the `error` fiel
 
 ## Success output
 
-- `list` and `show` return JSON. Render as a readable summary, or pass through.
+- `list`, `show`, and `tag ls` return JSON. Render as a readable summary, or pass through. (`tag ls` returns `{"tags": [{"name": ..., "count": ...}, ...]}`; the `tags` key is always present.)
 - `add`, `update`, `append`, `close`, `reopen`, `tag add`, `tag rm` print a single line (e.g. `added 1e3900e4`). Pass through.
 
 ## `edit <frag>`

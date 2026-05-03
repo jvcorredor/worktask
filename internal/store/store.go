@@ -135,25 +135,60 @@ func (s *Store) Add(description string, tags ...string) (task.Task, error) {
 	return t, nil
 }
 
+// TagCount is one entry in the result of [Store.ListTags]: a tag name
+// and the number of tasks (within the requested filter) that carry it.
+type TagCount struct {
+	Name  string
+	Count int
+}
+
+// ListTags scans the tasks selected by filter and returns each distinct
+// tag in use along with the count of tasks carrying it, sorted by Name.
+// Tags with zero occurrences never appear (the listing is derived from
+// task files; tags are not pre-registered). A missing subdirectory is
+// treated as empty rather than as an error.
+func (s *Store) ListTags(filter Filter) ([]TagCount, error) {
+	tasks, err := s.List(filter, 0, "")
+	if err != nil {
+		return nil, err
+	}
+	counts := make(map[string]int)
+	for _, t := range tasks {
+		for _, name := range t.Tags {
+			counts[name]++
+		}
+	}
+	out := make([]TagCount, 0, len(counts))
+	for name, n := range counts {
+		out = append(out, TagCount{Name: name, Count: n})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out, nil
+}
+
 // List returns the tasks selected by filter. Open tasks are returned in
 // directory order; closed tasks are sorted by Completed descending and
 // truncated to closedLimit when closedLimit is positive. When filter is
-// [FilterAll], the result is open tasks followed by closed tasks.
+// [FilterAll], the result is open tasks followed by closed tasks. When
+// tagFilter is non-empty, only tasks whose Tags slice contains the
+// (already-normalized) tag are returned; the tag filter composes as
+// AND with filter and is applied before the closedLimit cap.
 // A missing subdirectory is treated as empty rather than as an error.
-func (s *Store) List(filter Filter, closedLimit int) ([]task.Task, error) {
+func (s *Store) List(filter Filter, closedLimit int, tagFilter string) ([]task.Task, error) {
 	var open, closed []task.Task
 	if filter == FilterOpen || filter == FilterAll {
 		ts, err := s.loadDir("open")
 		if err != nil {
 			return nil, err
 		}
-		open = ts
+		open = filterByTag(ts, tagFilter)
 	}
 	if filter == FilterClosed || filter == FilterAll {
 		ts, err := s.loadDir("closed")
 		if err != nil {
 			return nil, err
 		}
+		ts = filterByTag(ts, tagFilter)
 		sort.Slice(ts, func(i, j int) bool { return ts[j].Completed.Before(ts[i].Completed) })
 		if closedLimit > 0 && len(ts) > closedLimit {
 			ts = ts[:closedLimit]
@@ -161,6 +196,22 @@ func (s *Store) List(filter Filter, closedLimit int) ([]task.Task, error) {
 		closed = ts
 	}
 	return append(open, closed...), nil
+}
+
+func filterByTag(tasks []task.Task, tagFilter string) []task.Task {
+	if tagFilter == "" {
+		return tasks
+	}
+	out := make([]task.Task, 0, len(tasks))
+	for _, t := range tasks {
+		for _, tg := range t.Tags {
+			if tg == tagFilter {
+				out = append(out, t)
+				break
+			}
+		}
+	}
+	return out
 }
 
 func (s *Store) loadDir(sub string) ([]task.Task, error) {

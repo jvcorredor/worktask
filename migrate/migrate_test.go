@@ -31,7 +31,7 @@ func TestRun_TracerBullet(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 
-	openTasks, err := s.List(store.FilterOpen, 0)
+	openTasks, err := s.List(store.FilterOpen, 0, "")
 	if err != nil {
 		t.Fatalf("List open: %v", err)
 	}
@@ -52,7 +52,7 @@ func TestRun_TracerBullet(t *testing.T) {
 		t.Errorf("open task body = %q, want %q", got, want)
 	}
 
-	closedTasks, err := s.List(store.FilterClosed, 0)
+	closedTasks, err := s.List(store.FilterClosed, 0, "")
 	if err != nil {
 		t.Fatalf("List closed: %v", err)
 	}
@@ -109,14 +109,14 @@ func TestRun_RefusesWhenAlreadyMigrated(t *testing.T) {
 		t.Fatal("second Run: expected error, got nil")
 	}
 
-	openTasks, err := s.List(store.FilterOpen, 0)
+	openTasks, err := s.List(store.FilterOpen, 0, "")
 	if err != nil {
 		t.Fatalf("List open: %v", err)
 	}
 	if len(openTasks) != 1 {
 		t.Errorf("open tasks after rerun = %d, want 1 (no duplicates)", len(openTasks))
 	}
-	closedTasks, err := s.List(store.FilterClosed, 0)
+	closedTasks, err := s.List(store.FilterClosed, 0, "")
 	if err != nil {
 		t.Fatalf("List closed: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestRun_AbsorbsIndentedContinuation(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 
-	openTasks, err := s.List(store.FilterOpen, 0)
+	openTasks, err := s.List(store.FilterOpen, 0, "")
 	if err != nil {
 		t.Fatalf("List open: %v", err)
 	}

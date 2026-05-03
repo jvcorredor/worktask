@@ -7,6 +7,7 @@ import (
 
 	"github.com/jvcorredor/worktask/internal/render"
 	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/worktask/internal/tag"
 	"github.com/jvcorredor/worktask/internal/tty"
 )
 
@@ -16,6 +17,7 @@ var (
 	listAll    bool
 	listClosed bool
 	listLimit  int
+	listTag    string
 )
 
 var listCmd = &cobra.Command{
@@ -41,7 +43,15 @@ var listCmd = &cobra.Command{
 			limit = listLimit
 		}
 
-		tasks, err := s.List(filter, limit)
+		var normalizedTag string
+		if listTag != "" {
+			normalizedTag = tag.Normalize(listTag)
+			if err := tag.Validate(normalizedTag); err != nil {
+				return fmt.Errorf("invalid --tag %q: %w", listTag, err)
+			}
+		}
+
+		tasks, err := s.List(filter, limit, normalizedTag)
 		if err != nil {
 			return err
 		}
@@ -66,5 +76,6 @@ func init() {
 	listCmd.Flags().BoolVar(&listAll, "all", false, "include closed tasks alongside open")
 	listCmd.Flags().BoolVar(&listClosed, "closed", false, "show closed tasks only")
 	listCmd.Flags().IntVar(&listLimit, "limit", 0, "cap on closed entries (default 20)")
+	listCmd.Flags().StringVar(&listTag, "tag", "", "filter to tasks carrying this tag (exact match)")
 	rootCmd.AddCommand(listCmd)
 }
