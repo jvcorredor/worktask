@@ -937,3 +937,204 @@ func TestTagsSurviveAppend(t *testing.T) {
 		t.Errorf("tags after append = %v, want [bug]", got.Tags)
 	}
 }
+
+func TestAddTag_addsTagToTaskWithNoTags(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.AddTag("abcdef12", "urgent")
+	if err != nil {
+		t.Fatalf("AddTag: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "urgent" {
+		t.Errorf("tags after AddTag = %v, want [urgent]", got.Tags)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [urgent]\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestAddTag_idempotent(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk", "urgent"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.AddTag("abcdef12", "urgent")
+	if err != nil {
+		t.Fatalf("AddTag: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "urgent" {
+		t.Errorf("tags after idempotent AddTag = %v, want [urgent]", got.Tags)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [urgent]\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestAddTag_normalizesUppercaseTag(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.AddTag("abcdef12", "URGENT")
+	if err != nil {
+		t.Fatalf("AddTag: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "urgent" {
+		t.Errorf("tags after AddTag = %v, want [urgent] (normalized)", got.Tags)
+	}
+}
+
+func TestAddTag_rejectsInvalidTag(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.AddTag("abcdef12", "bad tag!")
+	if err == nil {
+		t.Fatalf("AddTag with invalid tag: expected error")
+	}
+}
+
+func TestAddTag_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.AddTag("nonexistent-zzz", "urgent")
+	if err == nil {
+		t.Fatalf("AddTag: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}
+
+func TestRemoveTag_removesTagAndRewritesFile(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk", "urgent", "shopping"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.RemoveTag("abcdef12", "urgent")
+	if err != nil {
+		t.Fatalf("RemoveTag: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "shopping" {
+		t.Errorf("tags after RemoveTag = %v, want [shopping]", got.Tags)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\ntags: [shopping]\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestRemoveTag_idempotent(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk", "shopping"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.RemoveTag("abcdef12", "urgent")
+	if err != nil {
+		t.Fatalf("RemoveTag: %v", err)
+	}
+	if len(got.Tags) != 1 || got.Tags[0] != "shopping" {
+		t.Errorf("tags after idempotent RemoveTag = %v, want [shopping]", got.Tags)
+	}
+}
+
+func TestRemoveTag_removingLastTagOmitsTagsLine(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk", "urgent"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.RemoveTag("abcdef12", "urgent")
+	if err != nil {
+		t.Fatalf("RemoveTag: %v", err)
+	}
+	if len(got.Tags) != 0 {
+		t.Errorf("tags after RemoveTag = %v, want []", got.Tags)
+	}
+
+	path := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	want := "---\nid: abcdef12\ncreated: 2026-04-29T11:30:00Z\n---\nbuy milk\n"
+	if string(data) != want {
+		t.Errorf("file contents:\n--- got ---\n%s\n--- want ---\n%s", data, want)
+	}
+}
+
+func TestRemoveTag_zeroMatchReturnsTypedError(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk", "urgent"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	_, err := s.RemoveTag("nonexistent-zzz", "urgent")
+	if err == nil {
+		t.Fatalf("RemoveTag: expected error")
+	}
+	var nm *ErrNoMatch
+	if !errors.As(err, &nm) {
+		t.Fatalf("error type = %T (%v); want *ErrNoMatch", err, err)
+	}
+}

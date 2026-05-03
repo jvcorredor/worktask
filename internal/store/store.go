@@ -362,6 +362,72 @@ func (s *Store) Path(fragment string) (string, error) {
 	return l.path, nil
 }
 
+// AddTag resolves fragment, normalizes and validates tag, appends it
+// to the task's tags if not already present, re-encodes the task, and
+// rewrites the file in place. Returns [*ErrNoMatch] or [*ErrAmbiguous]
+// when fragment does not resolve. Prints an error and returns a non-nil
+// error if the tag is invalid after normalization.
+func (s *Store) AddTag(fragment, rawTag string) (task.Task, error) {
+	l, err := s.resolve(fragment, []string{"open", "closed"})
+	if err != nil {
+		return task.Task{}, err
+	}
+	t := l.task
+	n := tag.Normalize(rawTag)
+	if err := tag.Validate(n); err != nil {
+		return task.Task{}, fmt.Errorf("store: invalid tag %q: %w", rawTag, err)
+	}
+	for _, existing := range t.Tags {
+		if existing == n {
+			return t, nil
+		}
+	}
+	t.Tags = append(t.Tags, n)
+	data, err := task.Encode(t)
+	if err != nil {
+		return task.Task{}, fmt.Errorf("store: encode: %w", err)
+	}
+	if err := os.WriteFile(l.path, data, 0o644); err != nil {
+		return task.Task{}, fmt.Errorf("store: write %s: %w", l.path, err)
+	}
+	return t, nil
+}
+
+// RemoveTag resolves fragment, normalizes tag, removes it from the
+// task's tags if present, re-encodes the task, and rewrites the file in
+// place. When the last tag is removed, the tags frontmatter line is
+// omitted. Returns [*ErrNoMatch] or [*ErrAmbiguous] when fragment does
+// not resolve. Re-running with an absent tag is a no-op.
+func (s *Store) RemoveTag(fragment, rawTag string) (task.Task, error) {
+	l, err := s.resolve(fragment, []string{"open", "closed"})
+	if err != nil {
+		return task.Task{}, err
+	}
+	t := l.task
+	n := tag.Normalize(rawTag)
+	if err := tag.Validate(n); err != nil {
+		return task.Task{}, fmt.Errorf("store: invalid tag %q: %w", rawTag, err)
+	}
+	var filtered []string
+	for _, existing := range t.Tags {
+		if existing != n {
+			filtered = append(filtered, existing)
+		}
+	}
+	if len(filtered) == len(t.Tags) {
+		return t, nil
+	}
+	t.Tags = filtered
+	data, err := task.Encode(t)
+	if err != nil {
+		return task.Task{}, fmt.Errorf("store: encode: %w", err)
+	}
+	if err := os.WriteFile(l.path, data, 0o644); err != nil {
+		return task.Task{}, fmt.Errorf("store: write %s: %w", l.path, err)
+	}
+	return t, nil
+}
+
 // Append concatenates text to the body of the task identified by
 // fragment, inserting a separating newline when the existing body does
 // not already end with one, and rewrites the file in place. The task's

@@ -1,7 +1,7 @@
 ---
 title: Reference slash command
 description: Manage tasks via the worktask CLI
-argument-hint: <add|list|show|close|reopen|update|append|edit|research|research-log> [args...]
+argument-hint: <add|list|show|close|reopen|update|append|tag|edit|research|research-log> [args...]
 ---
 
 Manage tasks via the `worktask` CLI. Task state lives in per-task markdown files under the configured XDG data directory; this command never reads, parses, or rewrites `WORKING.md` or any task file directly. The CLI owns ID generation, slug generation, match resolution, and formatting.
@@ -19,6 +19,8 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 | `reopen <frag>` | `worktask --format=json reopen "<frag>"` |
 | `update <frag> <new description>` | `worktask --format=json update "<frag>" "<new description>"` |
 | `append <frag> <text>` | `worktask --format=json append "<frag>" "<text>"` |
+| `tag add <frag> <tag>` | `worktask tag add "<frag>" "<tag>"` |
+| `tag rm <frag> <tag>` | `worktask tag rm "<frag>" "<tag>"` |
 | `edit <frag>` | see below — do NOT shell out to `worktask edit` |
 | `research [<frag>]` | see "research" below — invokes a background bash, returns an ack, reports back when done |
 | `research-log <frag>` | `worktask research-log "<frag>"` |
@@ -38,7 +40,7 @@ When the CLI exits non-zero, parse stdout as JSON and branch on the `error` fiel
 ## Success output
 
 - `list` and `show` return JSON. Render as a readable summary, or pass through.
-- `add`, `update`, `append`, `close`, `reopen` print a single line (e.g. `added 1e3900e4`). Pass through.
+- `add`, `update`, `append`, `close`, `reopen`, `tag add`, `tag rm` print a single line (e.g. `added 1e3900e4`). Pass through.
 
 ## `edit <frag>`
 
