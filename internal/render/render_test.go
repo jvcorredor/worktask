@@ -433,7 +433,7 @@ func TestJSONShow_matchesSnapshot(t *testing.T) {
 		Body:    "buy milk\nremember the brand\n",
 	}
 
-	got, err := JSONShow(tk)
+	got, err := JSONShow(tk, "/tasks/open/2026-04-29T11-30_abcdef12_buy-milk.md")
 	if err != nil {
 		t.Fatalf("JSONShow: %v", err)
 	}

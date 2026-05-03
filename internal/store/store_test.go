@@ -101,7 +101,7 @@ func TestGet_exactID(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	got, raw, err := s.Get("abcdef12")
+	got, raw, gotPath, err := s.Get("abcdef12")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -115,6 +115,13 @@ func TestGet_exactID(t *testing.T) {
 	if string(raw) != wantRaw {
 		t.Errorf("raw bytes:\n--- got ---\n%s\n--- want ---\n%s", raw, wantRaw)
 	}
+	wantPath, err := s.Path("abcdef12")
+	if err != nil {
+		t.Fatalf("Path: %v", err)
+	}
+	if gotPath != wantPath {
+		t.Errorf("Get path = %q; want %q (must match Store.Path for the same fragment)", gotPath, wantPath)
+	}
 }
 
 func TestGet_idPrefix(t *testing.T) {
@@ -126,7 +133,7 @@ func TestGet_idPrefix(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	got, _, err := s.Get("abcd")
+	got, _, _, err := s.Get("abcd")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -144,7 +151,7 @@ func TestGet_descriptionExactCI(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	got, _, err := s.Get("buy milk")
+	got, _, _, err := s.Get("buy milk")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -162,7 +169,7 @@ func TestGet_descriptionSubstring(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	got, _, err := s.Get("MILK")
+	got, _, _, err := s.Get("MILK")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -185,7 +192,7 @@ func TestGet_idExactShortCircuits(t *testing.T) {
 		t.Fatalf("Add B: %v", err)
 	}
 
-	got, _, err := s.Get("abcdef12")
+	got, _, _, err := s.Get("abcdef12")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -208,7 +215,7 @@ func TestGet_ambiguousReturnsTypedErrorWithCandidates(t *testing.T) {
 		t.Fatalf("Add B: %v", err)
 	}
 
-	_, _, err := s.Get("milk")
+	_, _, _, err := s.Get("milk")
 	if err == nil {
 		t.Fatalf("Get: expected error")
 	}
@@ -243,7 +250,7 @@ func TestGet_zeroMatchReturnsTypedError(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 
-	_, _, err := s.Get("nonexistent-zzz")
+	_, _, _, err := s.Get("nonexistent-zzz")
 	if err == nil {
 		t.Fatalf("Get: expected error")
 	}
@@ -280,7 +287,7 @@ func TestGet_resolvesClosedTasks(t *testing.T) {
 	}
 
 	s := New(dir)
-	got, _, err := s.Get("deadbeef")
+	got, _, _, err := s.Get("deadbeef")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
@@ -743,6 +750,42 @@ func TestPath_returnsResolvedFilePath(t *testing.T) {
 	want := filepath.Join(dir, "open", "2026-04-29T11-30_abcdef12_buy-milk.md")
 	if got != want {
 		t.Errorf("Path = %q; want %q", got, want)
+	}
+}
+
+// TestPath_returnsAbsolutePathEvenWhenTasksDirIsRelative pins the
+// docstring contract on Store.Path: callers receive a path they can use
+// from any working directory, regardless of how the store was
+// configured. We chdir into a tempdir, point the store at a relative
+// "tasks" sibling, and assert the returned path is absolute.
+func TestPath_returnsAbsolutePathEvenWhenTasksDirIsRelative(t *testing.T) {
+	root := t.TempDir()
+	tasksAbs := filepath.Join(root, "tasks")
+	if err := os.MkdirAll(tasksAbs, 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(prev) })
+
+	s := New("tasks")
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
+	s.NewID = func() string { return "abcdef12" }
+	if _, err := s.Add("buy milk"); err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	got, err := s.Path("abcdef12")
+	if err != nil {
+		t.Fatalf("Path: %v", err)
+	}
+	if !filepath.IsAbs(got) {
+		t.Errorf("Path = %q; want an absolute path (TasksDir was relative)", got)
 	}
 }
 

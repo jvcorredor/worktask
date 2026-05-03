@@ -214,14 +214,15 @@ func (e *ErrNoMatch) Error() string {
 }
 
 // Get resolves fragment against both open and closed tasks and returns
-// the matching [task.Task] together with the raw bytes of its file.
-// Returns [*ErrNoMatch] or [*ErrAmbiguous] when resolution fails.
-func (s *Store) Get(fragment string) (task.Task, []byte, error) {
+// the matching [task.Task], the raw bytes of its file, and the
+// absolute, cleaned path of the file (matching [Store.Path]). Returns
+// [*ErrNoMatch] or [*ErrAmbiguous] when resolution fails.
+func (s *Store) Get(fragment string) (task.Task, []byte, string, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
-		return task.Task{}, nil, err
+		return task.Task{}, nil, "", err
 	}
-	return l.task, l.raw, nil
+	return l.task, l.raw, l.path, nil
 }
 
 // Close marks the open task identified by fragment as completed at
@@ -333,9 +334,12 @@ func (s *Store) SetResearchMeta(fragment string, lastResearched time.Time, logPa
 	return t, nil
 }
 
-// Path returns the absolute path of the task file identified by
-// fragment. The task may be open or closed. Returns [*ErrNoMatch] or
-// [*ErrAmbiguous] when fragment does not resolve.
+// Path returns the absolute, cleaned path of the task file identified
+// by fragment. The path is absolute even when [Store.TasksDir] is
+// configured as a relative path. Symlinks in TasksDir are preserved
+// verbatim — no [filepath.EvalSymlinks] resolution. The task may be
+// open or closed. Returns [*ErrNoMatch] or [*ErrAmbiguous] when
+// fragment does not resolve.
 func (s *Store) Path(fragment string) (string, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
@@ -418,6 +422,11 @@ func (s *Store) loadAll(subdirs []string) ([]loaded, error) {
 				continue
 			}
 			path := filepath.Join(dir, e.Name())
+			abs, err := filepath.Abs(path)
+			if err != nil {
+				return nil, fmt.Errorf("store: abs %s: %w", path, err)
+			}
+			path = abs
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return nil, fmt.Errorf("store: read %s: %w", path, err)
