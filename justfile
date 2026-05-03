@@ -26,6 +26,14 @@ fmt-check:
 clean:
     rm -rf ./bin
 
+# Boot the Astro dev server with docs/ as the working directory
+docs-dev:
+    cd docs && yarn dev
+
+# Install (immutable) and build the Astro docs site, producing docs/dist/
+docs-build:
+    cd docs && yarn install --immutable && yarn build
+
 # Placeholder for the lint gate; wired up in #10
 lint:
     @echo "lint is not yet implemented; see https://github.com/jvcorredor/worktask/issues/10" >&2; exit 1
