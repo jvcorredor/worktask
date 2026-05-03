@@ -1,0 +1,34 @@
+# List every recipe in this justfile
+default:
+    @just --list
+
+# Compile the worktask CLI to ./bin/worktask
+build:
+    go build -o ./bin/worktask .
+
+# Run the Go test suite
+test:
+    go test ./...
+
+# Run go vet across all packages
+vet:
+    go vet ./...
+
+# Format every Go file in place
+fmt:
+    gofmt -w .
+
+# Fail if any Go file is not gofmt-clean (used by `ci`)
+fmt-check:
+    @out=$(gofmt -l .); if [ -n "$out" ]; then echo "Unformatted Go files:"; echo "$out"; exit 1; fi
+
+# Remove build artifacts under ./bin
+clean:
+    rm -rf ./bin
+
+# Placeholder for the lint gate; wired up in #10
+lint:
+    @echo "lint is not yet implemented; see https://github.com/jvcorredor/worktask/issues/10" >&2; exit 1
+
+# Run the full local CI gate (fmt-check, vet, test) in workflow order
+ci: fmt-check vet test
