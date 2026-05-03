@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +10,19 @@ import (
 
 	"github.com/jvcorredor/worktask/internal/task"
 )
+
+// writeTaskFile encodes tk and writes it under openDir; tests rely on
+// task.Decode reading the id from frontmatter, not the filename.
+func writeTaskFile(t *testing.T, openDir string, tk task.Task) {
+	t.Helper()
+	raw, err := task.Encode(tk)
+	if err != nil {
+		t.Fatalf("task.Encode: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(openDir, tk.ID+".md"), raw, 0o644); err != nil {
+		t.Fatalf("write task file: %v", err)
+	}
+}
 
 // TestShowCmd_humanPipeModePassesRawBytes is the end-to-end pipe-mode test:
 // when stdout is a non-TTY writer (here, *bytes.Buffer), `worktask show
@@ -55,5 +69,120 @@ func TestShowCmd_humanPipeModePassesRawBytes(t *testing.T) {
 	}
 	if !bytes.Equal(stdout.Bytes(), raw) {
 		t.Errorf("show pipe-mode output does not match raw file bytes.\n--- got ---\n%s\n--- want ---\n%s", stdout.Bytes(), raw)
+	}
+}
+
+// TestShowCmd_humanAmbiguousPipeModeIsPlain is the end-to-end pipe-mode
+// test for the ambiguous-fragment error block: when stderr is a non-TTY
+// writer (here, *bytes.Buffer), the candidate listing must be byte-
+// identical to today's `  <id>  <description>\n` rendering with no ANSI
+// escapes, and the leading prose line must be unchanged.
+func TestShowCmd_humanAmbiguousPipeModeIsPlain(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "config"))
+
+	openDir := filepath.Join(tmp, "worktask", "open")
+	if err := os.MkdirAll(openDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	writeTaskFile(t, openDir, task.Task{
+		ID:      "11111111",
+		Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+		Body:    "buy milk\n",
+	})
+	writeTaskFile(t, openDir, task.Task{
+		ID:      "22222222",
+		Created: time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC),
+		Body:    "buy milkshake\n",
+	})
+
+	prevFormat := format
+	format = formatHuman
+	t.Cleanup(func() { format = prevFormat })
+
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	rootCmd.SetArgs([]string{"show", "milk"})
+	t.Cleanup(func() {
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+		rootCmd.SetArgs(nil)
+	})
+
+	err := rootCmd.Execute()
+	if !errors.Is(err, errExit) {
+		t.Fatalf("expected errExit, got %v", err)
+	}
+
+	want := "ambiguous fragment \"milk\". matches:\n" +
+		"  11111111  buy milk\n" +
+		"  22222222  buy milkshake\n"
+
+	if stderr.String() != want {
+		t.Errorf("ambiguous pipe-mode stderr does not match plain rendering.\n--- got ---\n%s\n--- want ---\n%s", stderr.String(), want)
+	}
+	if bytes.ContainsRune(stderr.Bytes(), '\x1b') {
+		t.Errorf("ambiguous pipe-mode stderr must not contain ANSI escapes, got %q", stderr.String())
+	}
+}
+
+// TestShowCmd_humanNoMatchPipeModeIsPlain is the end-to-end pipe-mode
+// test for the no-match error block: when stderr is a non-TTY writer
+// (here, *bytes.Buffer), the open-tasks listing must be byte-identical
+// to today's plain `<id>  <YYYY-MM-DD HH:MM>  <description>\n` rendering
+// with no header and no ANSI escapes, and the leading prose line must
+// be unchanged.
+func TestShowCmd_humanNoMatchPipeModeIsPlain(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tmp, "config"))
+
+	openDir := filepath.Join(tmp, "worktask", "open")
+	if err := os.MkdirAll(openDir, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	writeTaskFile(t, openDir, task.Task{
+		ID:      "11111111",
+		Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+		Body:    "first task\n",
+	})
+	writeTaskFile(t, openDir, task.Task{
+		ID:      "22222222",
+		Created: time.Date(2026, 4, 29, 10, 30, 0, 0, time.UTC),
+		Body:    "second task\n",
+	})
+
+	prevFormat := format
+	format = formatHuman
+	t.Cleanup(func() { format = prevFormat })
+
+	var stdout, stderr bytes.Buffer
+	rootCmd.SetOut(&stdout)
+	rootCmd.SetErr(&stderr)
+	rootCmd.SetArgs([]string{"show", "zzz"})
+	t.Cleanup(func() {
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+		rootCmd.SetArgs(nil)
+	})
+
+	err := rootCmd.Execute()
+	if !errors.Is(err, errExit) {
+		t.Fatalf("expected errExit, got %v", err)
+	}
+
+	want := "no match for \"zzz\". open tasks:\n" +
+		"11111111  2026-04-29 09:00  first task\n" +
+		"22222222  2026-04-29 10:30  second task\n"
+
+	if stderr.String() != want {
+		t.Errorf("no-match pipe-mode stderr does not match plain rendering.\n--- got ---\n%s\n--- want ---\n%s", stderr.String(), want)
+	}
+	if bytes.ContainsRune(stderr.Bytes(), '\x1b') {
+		t.Errorf("no-match pipe-mode stderr must not contain ANSI escapes, got %q", stderr.String())
 	}
 }

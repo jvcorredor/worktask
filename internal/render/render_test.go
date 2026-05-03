@@ -302,6 +302,64 @@ func TestHumanShow_unstyledClosedTaskPassesRawThrough(t *testing.T) {
 	}
 }
 
+func TestHumanCandidates_unstyledSingleMatchesSnapshot(t *testing.T) {
+	candidates := []store.Candidate{
+		{ID: "abcdef12", Description: "buy milk"},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanCandidates(&buf, candidates, false); err != nil {
+		t.Fatalf("HumanCandidates: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/candidates_human_unstyled_single.txt")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("unstyled HumanCandidates does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), want)
+	}
+}
+
+func TestHumanCandidates_unstyledTruncatesLongDescription(t *testing.T) {
+	candidates := []store.Candidate{
+		{ID: "11111111", Description: strings.Repeat("x", 70)},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanCandidates(&buf, candidates, false); err != nil {
+		t.Fatalf("HumanCandidates: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/candidates_human_unstyled_truncated.txt")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("unstyled HumanCandidates does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), want)
+	}
+}
+
+func TestHumanCandidates_unstyledMultipleMatchesSnapshot(t *testing.T) {
+	candidates := []store.Candidate{
+		{ID: "11111111", Description: "buy milk"},
+		{ID: "22222222", Description: "buy milkshake"},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanCandidates(&buf, candidates, false); err != nil {
+		t.Fatalf("HumanCandidates: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/candidates_human_unstyled.txt")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("unstyled HumanCandidates does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), want)
+	}
+}
+
 func TestHumanList_unstyledEmptyList(t *testing.T) {
 	var buf bytes.Buffer
 	if err := HumanList(&buf, []task.Task{}, false); err != nil {

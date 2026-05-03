@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
+	"github.com/jvcorredor/worktask/internal/store"
 	"github.com/jvcorredor/worktask/internal/task"
 	"github.com/jvcorredor/worktask/internal/tty"
 )
@@ -150,6 +151,27 @@ func humanListDescBudget(w io.Writer) int {
 		return humanListMinDescBudget
 	}
 	return budget
+}
+
+// humanCandidatesStyled renders candidates with two leading spaces, the
+// ID in the accent colour, and the description truncated to 60 columns
+// with a trailing `…`. Layout is byte-equivalent to the unstyled path
+// (same column widths, same separators) so styled and pipe modes feel
+// like the same view in two skins. NO_COLOR is honoured natively by
+// lipgloss.
+func humanCandidatesStyled(w io.Writer, candidates []store.Candidate) error {
+	const max = 60
+	idStyle := lipgloss.NewStyle().Foreground(humanListAccent)
+	for _, c := range candidates {
+		desc := c.Description
+		if len(desc) > max {
+			desc = desc[:max-1] + "…"
+		}
+		if _, err := fmt.Fprintf(w, "  %s  %s\n", idStyle.Render(c.ID), desc); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // truncateRunes returns s shortened to width display runes, replacing

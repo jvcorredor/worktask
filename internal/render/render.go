@@ -292,9 +292,15 @@ func description(t task.Task) string {
 }
 
 // HumanCandidates writes the human-readable disambiguation listing for
-// candidates to w. Description is truncated to 60 columns with a
-// trailing ellipsis. Returns the first write error encountered.
-func HumanCandidates(w io.Writer, candidates []store.Candidate) error {
+// candidates to w. When styled is false the rendering is byte-identical
+// to today's plain output: "  <id>  <description>\n" per row, with the
+// description truncated to 60 columns with a trailing ellipsis. When
+// styled is true callers get the same layout with IDs in an accent
+// colour. Returns the first write error encountered.
+func HumanCandidates(w io.Writer, candidates []store.Candidate, styled bool) error {
+	if styled {
+		return humanCandidatesStyled(w, candidates)
+	}
 	const max = 60
 	for _, c := range candidates {
 		desc := c.Description
