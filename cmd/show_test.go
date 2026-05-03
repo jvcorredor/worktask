@@ -6,9 +6,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/jvcorredor/worktask/internal/render"
 	"github.com/jvcorredor/worktask/internal/task"
 )
 
@@ -248,5 +250,47 @@ func TestShowCmd_jsonIncludesAbsolutePath(t *testing.T) {
 	}
 	if got.Path != wantPath {
 		t.Errorf("`path` = %q; want %q", got.Path, wantPath)
+	}
+}
+
+// TestShowCmd_humanStyledModePathOwnLine asserts that the styled human
+// renderer includes the absolute task path on its own faint line between
+// the metadata strip and the glamour-rendered body. The test exercises
+// render.HumanShow directly with styled=true because the cobra command
+// test harness uses *bytes.Buffer (non-TTY), which always takes the
+// pipe-mode path.
+func TestShowCmd_humanStyledModePathOwnLine(t *testing.T) {
+	tk := task.Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Body:    "buy milk\n",
+	}
+	raw, err := task.Encode(tk)
+	if err != nil {
+		t.Fatalf("task.Encode: %v", err)
+	}
+
+	taskPath := "/tasks/open/2026-04-29T11-30_abcdef12_buy-milk.md"
+
+	var buf bytes.Buffer
+	if err := render.HumanShow(&buf, tk, raw, taskPath, true); err != nil {
+		t.Fatalf("HumanShow styled: %v", err)
+	}
+
+	out := buf.String()
+
+	if !strings.Contains(out, taskPath) {
+		t.Errorf("styled output must contain the path %q, got:\n%s", taskPath, out)
+	}
+
+	lines := strings.Split(out, "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected at least 3 lines (metadata, path, body), got %d:\n%s", len(lines), out)
+	}
+	if !strings.Contains(lines[1], taskPath) {
+		t.Errorf("second line must contain the path; got line %q", lines[1])
+	}
+	if strings.Contains(lines[0], taskPath) {
+		t.Errorf("metadata strip (first line) must not contain the path; got %q", lines[0])
 	}
 }
