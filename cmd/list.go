@@ -7,6 +7,7 @@ import (
 
 	"github.com/jvcorredor/worktask/internal/render"
 	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/worktask/internal/tty"
 )
 
 const defaultClosedLimit = 20
@@ -53,7 +54,8 @@ var listCmd = &cobra.Command{
 			_, err = cmd.OutOrStdout().Write(data)
 			return err
 		case formatHuman:
-			return render.HumanList(cmd.OutOrStdout(), tasks)
+			out := cmd.OutOrStdout()
+			return render.HumanList(out, tasks, tty.IsTerminal(out))
 		default:
 			return fmt.Errorf("unknown format: %s", format)
 		}

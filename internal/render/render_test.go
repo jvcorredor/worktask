@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -298,6 +299,72 @@ func TestHumanShow_unstyledClosedTaskPassesRawThrough(t *testing.T) {
 	}
 	if !bytes.Equal(buf.Bytes(), raw) {
 		t.Errorf("HumanShow unstyled output does not match raw input.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), raw)
+	}
+}
+
+func TestHumanList_unstyledEmptyList(t *testing.T) {
+	var buf bytes.Buffer
+	if err := HumanList(&buf, []task.Task{}, false); err != nil {
+		t.Fatalf("HumanList: %v", err)
+	}
+	if buf.Len() != 0 {
+		t.Errorf("expected empty output for empty list, got %q", buf.String())
+	}
+}
+
+func TestHumanList_unstyledMixedOpenClosedMatchesSnapshot(t *testing.T) {
+	tasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Body:    "first task\nbody continues here\n",
+		},
+		{
+			ID:        "22222222",
+			Created:   time.Date(2026, 4, 28, 10, 0, 0, 0, time.UTC),
+			Completed: time.Date(2026, 4, 30, 12, 0, 0, 0, time.UTC),
+			Body:      "shipped feature\n",
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanList(&buf, tasks, false); err != nil {
+		t.Fatalf("HumanList: %v", err)
+	}
+
+	want, err := os.ReadFile("testdata/list_human_unstyled.txt")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("unstyled HumanList does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", buf.Bytes(), want)
+	}
+}
+
+func TestHumanList_unstyledLongDescriptionsNotTruncated(t *testing.T) {
+	long := strings.Repeat("very long description ", 20)
+	tasks := []task.Task{
+		{
+			ID:      "abcdef12",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Body:    long + "\n",
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanList(&buf, tasks, false); err != nil {
+		t.Fatalf("HumanList: %v", err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, long) {
+		t.Errorf("expected long description preserved verbatim in unstyled output, got %q", out)
+	}
+	if strings.Count(out, "\n") != 1 {
+		t.Errorf("expected exactly one row (one newline) in unstyled output, got %d:\n%s", strings.Count(out, "\n"), out)
+	}
+	if strings.ContainsRune(out, '…') {
+		t.Errorf("unstyled output must not truncate with ellipsis, got %q", out)
 	}
 }
 

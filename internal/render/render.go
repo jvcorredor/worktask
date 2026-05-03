@@ -308,10 +308,17 @@ func HumanCandidates(w io.Writer, candidates []store.Candidate) error {
 	return nil
 }
 
-// HumanList writes one line per task to w, formatted as
-// "<id>  <yyyy-mm-dd hh:mm>  <description>". Returns the first write
-// error encountered.
-func HumanList(w io.Writer, tasks []task.Task) error {
+// HumanList writes one line per task to w. When styled is false the
+// rendering is byte-identical to today's plain output:
+// "<id>  <yyyy-mm-dd hh:mm>  <description>" per row, no header.
+// When styled is true callers get a borderless lipgloss table with a
+// header row, accent-coloured IDs, faint dates (date-only), and
+// descriptions hard-truncated to fit the terminal width. Returns the
+// first write error encountered.
+func HumanList(w io.Writer, tasks []task.Task, styled bool) error {
+	if styled {
+		return humanListStyled(w, tasks)
+	}
 	for _, t := range tasks {
 		if _, err := fmt.Fprintf(w, "%s  %s  %s\n", t.ID, t.Created.Format("2006-01-02 15:04"), description(t)); err != nil {
 			return err
