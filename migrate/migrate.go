@@ -1,3 +1,7 @@
+// Command worktask-migrate is the one-shot migration tool that promotes
+// the legacy WORKING.md working log into the per-task file layout under
+// the configured tasks directory. The transformation contract is
+// documented on [Run].
 package main
 
 import (
@@ -16,6 +20,25 @@ const tsLayout = "2006-01-02 15:04"
 
 var taskLineRe = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}) \[task ([0-9a-f]{8})(?: — completed (\d{4}-\d{2}-\d{2} \d{2}:\d{2}))?\]: (.+)$`)
 
+// Run migrates the legacy working-log file at workingMdPath into the
+// per-task layout owned by s.
+//
+// Contract:
+//
+//   - Every "[task <id>]:" line in the working log becomes a task file
+//     under s, preserving the original ID and Created timestamp parsed
+//     from the line. Lines marked "— completed <ts>" populate Completed
+//     so the task lands in closed/.
+//   - Indented and blank lines that follow a task line are folded into
+//     that task's body in source order; trailing blanks are returned to
+//     the working log instead of being attached to the task.
+//   - Non-task lines are preserved in the rewritten working log in their
+//     original order.
+//   - The rewritten working log is written back to workingMdPath after
+//     all task files have been created.
+//   - Run is not idempotent: calling it on a working log that contains
+//     no task lines returns an error so a second invocation does not
+//     silently truncate state.
 func Run(workingMdPath string, s *store.Store) error {
 	data, err := os.ReadFile(workingMdPath)
 	if err != nil {

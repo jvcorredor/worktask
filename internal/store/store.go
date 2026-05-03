@@ -1,3 +1,17 @@
+// Package store is the on-disk task repository: it owns the layout under
+// the configured tasks directory and is the only package that reads from
+// or writes to it.
+//
+// Directory layout. Open tasks live as files under tasks_dir/open and
+// closed tasks under tasks_dir/closed. Filenames follow the
+// "<RFC3339-minute>_<id>[_<slug>].md" pattern. Completing a task moves
+// its file from open to closed; reopening moves it back. Both directories
+// are created lazily on first use.
+//
+// Resolution. Methods that take a fragment look up a task by ID prefix or
+// by description match across the requested subdirectories, returning
+// [ErrNoMatch] when nothing matches and [*ErrAmbiguous] when more than
+// one task matches.
 package store
 
 import (
@@ -15,20 +29,30 @@ import (
 
 const slugMaxLen = 40
 
+// Filter selects which subset of tasks [Store.List] returns.
 type Filter int
 
+// Filter values for [Store.List].
 const (
+	// FilterOpen returns only tasks under the open subdirectory.
 	FilterOpen Filter = iota
+	// FilterClosed returns only tasks under the closed subdirectory.
 	FilterClosed
+	// FilterAll returns open tasks followed by closed tasks.
 	FilterAll
 )
 
+// Store is a handle to the on-disk task repository rooted at TasksDir.
+// Now and NewID are injection points for tests; production callers obtain
+// a Store with sensible defaults via [New].
 type Store struct {
 	TasksDir string
 	Now      func() time.Time
 	NewID    func() string
 }
 
+// New returns a [Store] rooted at tasksDir with production defaults:
+// time.Now for timestamps and crypto-random ids from internal/id.
 func New(tasksDir string) *Store {
 	return &Store{
 		TasksDir: tasksDir,
@@ -37,6 +61,11 @@ func New(tasksDir string) *Store {
 	}
 }
 
+// AddPreserved writes t verbatim to disk, choosing open/ when t.Completed
+// is the zero value and closed/ otherwise. The slug used in the filename
+// is derived from description, not from t.Body. Both subdirectories are
+// created if missing. Intended for migrations and tests that need to
+// place a task with caller-supplied identity and timestamps.
 func (s *Store) AddPreserved(t task.Task, description string) error {
 	openDir := filepath.Join(s.TasksDir, "open")
 	closedDir := filepath.Join(s.TasksDir, "closed")
@@ -60,6 +89,10 @@ func (s *Store) AddPreserved(t task.Task, description string) error {
 	return nil
 }
 
+// Add creates a new open task with description as its body, assigning a
+// fresh ID and the current time as Created. The task file is written
+// under tasks_dir/open and the resulting [task.Task] is returned. The
+// open and closed subdirectories are created if missing.
 func (s *Store) Add(description string) (task.Task, error) {
 	created := s.Now()
 	t := task.Task{
@@ -88,6 +121,11 @@ func (s *Store) Add(description string) (task.Task, error) {
 	return t, nil
 }
 
+// List returns the tasks selected by filter. Open tasks are returned in
+// directory order; closed tasks are sorted by Completed descending and
+// truncated to closedLimit when closedLimit is positive. When filter is
+// [FilterAll], the result is open tasks followed by closed tasks.
+// A missing subdirectory is treated as empty rather than as an error.
 func (s *Store) List(filter Filter, closedLimit int) ([]task.Task, error) {
 	var open, closed []task.Task
 	if filter == FilterOpen || filter == FilterAll {
@@ -145,28 +183,39 @@ type loaded struct {
 	path string
 }
 
+// Candidate is a one-line summary of a task surfaced when fragment
+// resolution is ambiguous.
 type Candidate struct {
 	ID          string
 	Description string
 }
 
+// ErrAmbiguous is returned when a fragment resolves to more than one
+// task. Candidates lists every task that matched the fragment.
 type ErrAmbiguous struct {
 	Fragment   string
 	Candidates []Candidate
 }
 
+// Error implements the error interface for [*ErrAmbiguous].
 func (e *ErrAmbiguous) Error() string {
 	return fmt.Sprintf("store: ambiguous fragment %q (%d candidates)", e.Fragment, len(e.Candidates))
 }
 
+// ErrNoMatch is returned when a fragment matches no task in the
+// requested subdirectories.
 type ErrNoMatch struct {
 	Fragment string
 }
 
+// Error implements the error interface for [*ErrNoMatch].
 func (e *ErrNoMatch) Error() string {
 	return fmt.Sprintf("store: no match for %q", e.Fragment)
 }
 
+// Get resolves fragment against both open and closed tasks and returns
+// the matching [task.Task] together with the raw bytes of its file.
+// Returns [*ErrNoMatch] or [*ErrAmbiguous] when resolution fails.
 func (s *Store) Get(fragment string) (task.Task, []byte, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
@@ -175,6 +224,11 @@ func (s *Store) Get(fragment string) (task.Task, []byte, error) {
 	return l.task, l.raw, nil
 }
 
+// Complete marks the open task identified by fragment as completed at
+// the current time, rewrites the file with the new frontmatter, and
+// moves it from open/ to closed/. Returns [*ErrNoMatch] or
+// [*ErrAmbiguous] when fragment does not resolve to exactly one open
+// task.
 func (s *Store) Complete(fragment string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"open"})
 	if err != nil {
@@ -201,6 +255,10 @@ func (s *Store) Complete(fragment string) (task.Task, error) {
 	return t, nil
 }
 
+// Reopen clears the Completed timestamp on the closed task identified by
+// fragment, rewrites the file, and moves it from closed/ back to open/.
+// Returns [*ErrNoMatch] or [*ErrAmbiguous] when fragment does not
+// resolve to exactly one closed task.
 func (s *Store) Reopen(fragment string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"closed"})
 	if err != nil {
@@ -226,6 +284,10 @@ func (s *Store) Reopen(fragment string) (task.Task, error) {
 	return t, nil
 }
 
+// Update replaces the first body line of the task identified by fragment
+// with newDescription and rewrites the file in place. The remainder of
+// the body and the open/closed location are preserved. Returns
+// [*ErrNoMatch] or [*ErrAmbiguous] when fragment does not resolve.
 func (s *Store) Update(fragment, newDescription string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
@@ -249,6 +311,10 @@ func (s *Store) Update(fragment, newDescription string) (task.Task, error) {
 	return t, nil
 }
 
+// SetResearchMeta updates the last_researched and last_research_log
+// frontmatter fields on the task identified by fragment and rewrites the
+// file in place. The task's open/closed location is preserved. Returns
+// [*ErrNoMatch] or [*ErrAmbiguous] when fragment does not resolve.
 func (s *Store) SetResearchMeta(fragment string, lastResearched time.Time, logPath string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
@@ -267,6 +333,9 @@ func (s *Store) SetResearchMeta(fragment string, lastResearched time.Time, logPa
 	return t, nil
 }
 
+// Path returns the absolute path of the task file identified by
+// fragment. The task may be open or closed. Returns [*ErrNoMatch] or
+// [*ErrAmbiguous] when fragment does not resolve.
 func (s *Store) Path(fragment string) (string, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {
@@ -275,6 +344,11 @@ func (s *Store) Path(fragment string) (string, error) {
 	return l.path, nil
 }
 
+// Append concatenates text to the body of the task identified by
+// fragment, inserting a separating newline when the existing body does
+// not already end with one, and rewrites the file in place. The task's
+// open/closed location is preserved. Returns [*ErrNoMatch] or
+// [*ErrAmbiguous] when fragment does not resolve.
 func (s *Store) Append(fragment, text string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"open", "closed"})
 	if err != nil {

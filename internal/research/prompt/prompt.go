@@ -33,6 +33,10 @@ func Load(overridePath string) (string, error) {
 	return string(data), nil
 }
 
+// Render parses tmpl as a text/template and executes it against t,
+// returning the rendered prompt. Parse and execution errors are wrapped
+// with a "prompt:" prefix so callers can distinguish template failures
+// from unrelated errors.
 func Render(tmpl string, t task.Task) (string, error) {
 	parsed, err := template.New("prompt").Parse(tmpl)
 	if err != nil {

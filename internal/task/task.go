@@ -1,3 +1,19 @@
+// Package task is the in-memory model and on-disk codec for a single task
+// file.
+//
+// On-disk format. A task file is YAML-style frontmatter delimited by lines
+// containing only "---", followed by a free-form markdown body. The
+// frontmatter carries `id`, `created`, optional `completed`, optional
+// `last_researched`, and optional `last_research_log`; all timestamps are
+// RFC 3339. The body is everything after the trailing delimiter and is
+// preserved verbatim. The user-visible specification of this format,
+// including which fields are stable and how they interact with the CLI,
+// lives on the docs site at
+// <https://jvcorredor.github.io/worktask/storage/>; this package
+// implements that contract and does not duplicate it.
+//
+// [Encode] and [Decode] are the only entry points; the rest of the codec
+// is internal.
 package task
 
 import (
@@ -7,6 +23,9 @@ import (
 	"time"
 )
 
+// Task is the in-memory representation of one task file. The zero value
+// of Completed and LastResearched means "not set" and is encoded by
+// omitting the corresponding frontmatter field.
 type Task struct {
 	ID              string
 	Created         time.Time
@@ -18,6 +37,12 @@ type Task struct {
 
 const delim = "---\n"
 
+// Encode serialises t as the bytes of a task file. The output is the
+// frontmatter described in the package documentation followed by t.Body
+// verbatim. Zero-valued Completed and LastResearched fields are omitted
+// from the frontmatter; an empty LastResearchLog is omitted as well.
+// Encode never returns an error in the current implementation, but the
+// signature reserves room for future format-validation failures.
 func Encode(t Task) ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteString(delim)
@@ -37,6 +62,13 @@ func Encode(t Task) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// Decode parses the bytes of a task file into a [Task]. It is the
+// inverse of [Encode] for any value Encode produces. Decode requires the
+// leading and trailing "---" frontmatter delimiters and rejects malformed
+// frontmatter lines or unparseable RFC 3339 timestamps. Unknown
+// frontmatter keys are tolerated and ignored so older binaries can read
+// task files written by newer ones. The body is returned verbatim,
+// without trimming.
 func Decode(data []byte) (Task, error) {
 	s := string(data)
 	if !strings.HasPrefix(s, delim) {

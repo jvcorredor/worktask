@@ -16,6 +16,11 @@ const stderrTailCap = 16 * 1024
 // OSExec spawns the real claude binary via os/exec. Production use only.
 type OSExec struct{}
 
+// Run starts cmd as a child process and returns a reader that streams
+// its stdout. Closing the returned reader waits for the process and, on
+// non-zero exit, returns an error that includes the captured tail of
+// stderr (capped at stderrTailCap bytes). ctx cancellation kills the
+// child via os/exec's context support.
 func (OSExec) Run(ctx context.Context, cmd Command) (io.ReadCloser, error) {
 	c := exec.CommandContext(ctx, cmd.Bin, cmd.Args...)
 	c.Stdin = strings.NewReader(cmd.Stdin)

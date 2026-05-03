@@ -1,3 +1,15 @@
+// Package config loads and validates the user's worktask configuration.
+//
+// The configuration is read from a single TOML file. The path is
+// $XDG_CONFIG_HOME/worktask/config.toml when XDG_CONFIG_HOME is set, and
+// $HOME/.config/worktask/config.toml otherwise. A missing file is not an
+// error; defaults fill in. See the user-visible config keys and their
+// meanings on the docs site at
+// <https://jvcorredor.github.io/worktask/configuration/>.
+//
+// [Load] is the only entry point for callers; values that escape this
+// package have already passed [ValidateExtraTools] and are safe to feed
+// into the unattended research agent.
 package config
 
 import (
@@ -11,6 +23,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Config is the resolved, validated configuration handed to the rest of
+// the CLI. Defaults for unset fields are applied during [Load].
 type Config struct {
 	TasksDir           string
 	Editor             string
@@ -34,6 +48,11 @@ type fileConfig struct {
 	ResearchExtraTools []string `toml:"research_extra_tools"`
 }
 
+// Load reads and validates the user's config file, returning a Config
+// with defaults applied for any unset fields. A missing config file is
+// not an error and yields a fully-defaulted Config. Validation failures
+// (for example, a write-capable entry in research_extra_tools) are
+// returned as errors and prevent the Config from escaping the package.
 func Load() (Config, error) {
 	var fc fileConfig
 	path := configFilePath()
@@ -58,6 +77,9 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
+// ResolveEditor returns the editor command worktask should launch for
+// interactive edits. The configured Editor wins; otherwise the EDITOR
+// environment variable is used; otherwise the function falls back to vi.
 func (c Config) ResolveEditor() string {
 	if c.Editor != "" {
 		return c.Editor
