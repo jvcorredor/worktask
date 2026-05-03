@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jvcorredor/worktask/internal/tag"
 )
 
 // Task is the in-memory representation of one task file. The zero value
@@ -32,6 +34,7 @@ type Task struct {
 	Completed       time.Time
 	LastResearched  time.Time
 	LastResearchLog string
+	Tags            []string
 	Body            string
 }
 
@@ -41,8 +44,10 @@ const delim = "---\n"
 // frontmatter described in the package documentation followed by t.Body
 // verbatim. Zero-valued Completed and LastResearched fields are omitted
 // from the frontmatter; an empty LastResearchLog is omitted as well.
-// Encode never returns an error in the current implementation, but the
-// signature reserves room for future format-validation failures.
+// An empty Tags slice is omitted; a non-empty Tags slice is written as
+// a YAML flow-style list. Encode never returns an error in the current
+// implementation, but the signature reserves room for future
+// format-validation failures.
 func Encode(t Task) ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteString(delim)
@@ -56,6 +61,9 @@ func Encode(t Task) ([]byte, error) {
 	}
 	if t.LastResearchLog != "" {
 		fmt.Fprintf(&b, "last_research_log: %s\n", t.LastResearchLog)
+	}
+	if len(t.Tags) > 0 {
+		fmt.Fprintf(&b, "tags: [%s]\n", strings.Join(t.Tags, ", "))
 	}
 	b.WriteString(delim)
 	b.WriteString(t.Body)
@@ -111,8 +119,27 @@ func Decode(data []byte) (Task, error) {
 			t.LastResearched = parsed
 		case "last_research_log":
 			t.LastResearchLog = value
+		case "tags":
+			t.Tags = parseTags(value)
 		}
 	}
 	t.Body = body
 	return t, nil
+}
+
+func parseTags(value string) []string {
+	value = strings.Trim(value, "[]")
+	if value == "" {
+		return nil
+	}
+	raw := strings.Split(value, ",")
+	var out []string
+	for _, r := range raw {
+		n := tag.Normalize(strings.TrimSpace(r))
+		if tag.Validate(n) != nil {
+			continue
+		}
+		out = append(out, n)
+	}
+	return tag.Deduplicate(out)
 }

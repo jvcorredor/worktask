@@ -24,6 +24,7 @@ import (
 
 	"github.com/jvcorredor/worktask/internal/id"
 	"github.com/jvcorredor/worktask/internal/slug"
+	"github.com/jvcorredor/worktask/internal/tag"
 	"github.com/jvcorredor/worktask/internal/task"
 )
 
@@ -90,14 +91,27 @@ func (s *Store) AddPreserved(t task.Task, description string) error {
 }
 
 // Add creates a new open task with description as its body, assigning a
-// fresh ID and the current time as Created. The task file is written
-// under tasks_dir/open and the resulting [task.Task] is returned. The
-// open and closed subdirectories are created if missing.
-func (s *Store) Add(description string) (task.Task, error) {
+// fresh ID and the current time as Created. Any tags are normalized and
+// validated before encoding; an invalid tag causes Add to return an error.
+// The task file is written under tasks_dir/open and the resulting
+// [task.Task] is returned. The open and closed subdirectories are created
+// if missing.
+func (s *Store) Add(description string, tags ...string) (task.Task, error) {
+	normalized := make([]string, 0, len(tags))
+	for _, raw := range tags {
+		n := tag.Normalize(raw)
+		if err := tag.Validate(n); err != nil {
+			return task.Task{}, fmt.Errorf("store: invalid tag %q: %w", raw, err)
+		}
+		normalized = append(normalized, n)
+	}
+	normalized = tag.Deduplicate(normalized)
+
 	created := s.Now()
 	t := task.Task{
 		ID:      s.NewID(),
 		Created: created,
+		Tags:    normalized,
 		Body:    description + "\n",
 	}
 

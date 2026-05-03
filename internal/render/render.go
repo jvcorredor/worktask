@@ -7,7 +7,8 @@
 //	    "id":          string,  // 8-char lowercase hex
 //	    "created":     string,  // RFC 3339 timestamp
 //	    "description": string,  // first body line
-//	    "completed":   string   // RFC 3339; omitted when task is open
+//	    "completed":   string,  // RFC 3339; omitted when task is open
+//	    "tags":        []string // always present; empty array when no tags
 //	  },
 //	  ...
 //	]
@@ -49,10 +50,11 @@ import (
 )
 
 type jsonTask struct {
-	ID          string `json:"id"`
-	Created     string `json:"created"`
-	Description string `json:"description"`
-	Completed   string `json:"completed,omitempty"`
+	ID          string   `json:"id"`
+	Created     string   `json:"created"`
+	Description string   `json:"description"`
+	Completed   string   `json:"completed,omitempty"`
+	Tags        []string `json:"tags"`
 }
 
 type jsonShowTask struct {
@@ -286,6 +288,10 @@ func toJSONTask(t task.Task) jsonTask {
 		ID:          t.ID,
 		Created:     t.Created.Format(time.RFC3339),
 		Description: description(t),
+		Tags:        t.Tags,
+	}
+	if out.Tags == nil {
+		out.Tags = []string{}
 	}
 	if !t.Completed.IsZero() {
 		out.Completed = t.Completed.Format(time.RFC3339)
