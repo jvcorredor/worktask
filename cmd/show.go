@@ -83,7 +83,7 @@ func handleResolveError(cmd *cobra.Command, s *store.Store, fragment string, err
 			}
 		} else {
 			cmd.PrintErrf("no match for %q. open tasks:\n", fragment)
-			if rerr := render.HumanList(cmd.ErrOrStderr(), openTasks); rerr != nil {
+			if rerr := render.HumanList(cmd.ErrOrStderr(), openTasks, false); rerr != nil {
 				return rerr
 			}
 		}

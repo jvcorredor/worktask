@@ -56,6 +56,13 @@ $ worktask list --all
 $ worktask list --closed --limit 50
 ```
 
+In `--format=human`, the rendering is TTY-aware:
+
+- When stdout is a terminal, rows render as a borderless aligned table with a subdued `ID  CREATED  DESCRIPTION` header, IDs in an accent colour, dates faint and date-only (`YYYY-MM-DD`), and descriptions hard-truncated with `…` to fit the terminal width. `NO_COLOR` disables colour while preserving layout.
+- When stdout is piped, redirected, or running in a non-TTY environment (CI, scripts), output is plain `id  YYYY-MM-DD HH:MM  description` rows with no header and no ANSI escapes — the contract callers rely on for `grep`, `awk`, and other text tools.
+
+In `--format=json`, output is a JSON array; the schema is documented in [Agentic usage](./agentic.md) and is unchanged by TTY detection.
+
 ## `show`
 
 Prints a single task.
