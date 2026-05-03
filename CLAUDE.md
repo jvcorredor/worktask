@@ -10,6 +10,14 @@ Any PR that changes user-visible CLI surface — subcommands, flags, JSON schema
 
 The vendored reference slash command at `docs/src/content/docs/examples/worktask-slash-command.md` is part of that contract. If a JSON schema or error-envelope change requires updating how an agent wraps the CLI, the slash-command file is updated in the same PR as the schema change.
 
+## Go source-level docs
+
+Exported Go symbols carry doc comments in the standard Go convention: a complete sentence that begins with the identifier name. Every package has a package doc comment that explains what it does and any contracts (on-disk format, stable schema, side effects).
+
+`go doc <pkg>` is the preferred way to get a package overview — it reads the package and symbol comments straight from source, so it stays current as the code changes.
+
+`golangci-lint run` enforces this via `revive`'s `exported` rule and `staticcheck`'s `ST1000`. Run it before opening a PR; CI runs the same gate. This rule is about internal-developer docs; user-visible CLI surface continues to live on the docs site per the rule above.
+
 ## Agent skills
 
 ### Issue tracker

@@ -10,26 +10,15 @@ linters:
     - staticcheck
     - unused
   settings:
-    staticcheck:
-      # Excluded rules:
-      # - ST1000: package doc comment. The doc-comment backfill lands in a
-      #   follow-up slice; enabling ST1000 here would make CI yellow-by-design.
-      checks:
-        - all
-        - -ST1000
     revive:
       # `exported` is revive's load-bearing rule for this repo: it enforces
-      # doc comments on exported identifiers. It is disabled here because the
-      # doc-comment backfill lands in a follow-up slice; turning it on now
-      # would make CI yellow-by-design. The follow-up slice flips this to
-      # `disabled: false` together with the backfill.
+      # doc comments on exported identifiers.
       #
       # In golangci-lint v2, listing any rule under revive overrides the
-      # default ruleset, so revive currently runs no checks. That is
-      # intentional for this slice.
+      # default ruleset, so only the rules listed here run.
       rules:
         - name: exported
-          disabled: true
+          disabled: false
 
 formatters:
   enable:

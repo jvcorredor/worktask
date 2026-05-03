@@ -69,6 +69,9 @@ type jsonErrNoMatch struct {
 	OpenTasks []jsonTask `json:"open_tasks"`
 }
 
+// JSONErrorNoMatch renders the no-match error envelope: an object with
+// error="no_match", the offending fragment, and the current open tasks
+// for the user to choose from.
 func JSONErrorNoMatch(fragment string, openTasks []task.Task) ([]byte, error) {
 	tasks := make([]jsonTask, 0, len(openTasks))
 	for _, t := range openTasks {
@@ -77,6 +80,9 @@ func JSONErrorNoMatch(fragment string, openTasks []task.Task) ([]byte, error) {
 	return marshalIndent(jsonErrNoMatch{Error: "no_match", Fragment: fragment, OpenTasks: tasks})
 }
 
+// JSONErrorAmbiguous renders the ambiguous-fragment error envelope: an
+// object with error="ambiguous", the offending fragment, and the
+// candidate tasks the fragment matched.
 func JSONErrorAmbiguous(fragment string, candidates []store.Candidate) ([]byte, error) {
 	matches := make([]jsonMatch, 0, len(candidates))
 	for _, c := range candidates {
@@ -104,6 +110,9 @@ type jsonResearchRun struct {
 	Error       string `json:"error,omitempty"`
 }
 
+// JSONResearchRun renders the per-task summary line emitted on stdout
+// when `worktask research <hash>` completes. The output schema is
+// described in the package documentation.
 func JSONResearchRun(r ResearchRun) ([]byte, error) {
 	return marshalIndent(jsonResearchRun(r))
 }
@@ -130,6 +139,9 @@ type jsonResearchEvent struct {
 	Error       string `json:"error,omitempty"`
 }
 
+// JSONResearchEvent renders one streaming progress event as a
+// newline-terminated single-line JSON object suitable for stdout
+// streaming during a research batch.
 func JSONResearchEvent(e ResearchEvent) ([]byte, error) {
 	out := jsonResearchEvent{
 		Event:       e.Type,
@@ -199,6 +211,9 @@ type jsonResearchSummaryTotals struct {
 	Skipped  int `json:"skipped"`
 }
 
+// JSONResearchSummary renders the final per-batch summary written as
+// the last stdout line when a research sweep completes. Timestamps are
+// emitted as RFC 3339 in UTC.
 func JSONResearchSummary(s ResearchSummary) ([]byte, error) {
 	results := make([]jsonResearchSummaryResult, 0, len(s.Results))
 	for _, r := range s.Results {
@@ -230,10 +245,14 @@ func marshalLine(v any) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// JSONShow renders a single task in the show schema described in the
+// package documentation: the list-element fields plus the full body.
 func JSONShow(t task.Task) ([]byte, error) {
 	return marshalIndent(jsonShowTask{jsonTask: toJSONTask(t), Body: t.Body})
 }
 
+// JSONList renders tasks as the stable list-element schema described
+// in the package documentation, in the order given.
 func JSONList(tasks []task.Task) ([]byte, error) {
 	out := make([]jsonTask, 0, len(tasks))
 	for _, t := range tasks {
@@ -272,6 +291,9 @@ func description(t task.Task) string {
 	return body
 }
 
+// HumanCandidates writes the human-readable disambiguation listing for
+// candidates to w. Description is truncated to 60 columns with a
+// trailing ellipsis. Returns the first write error encountered.
 func HumanCandidates(w io.Writer, candidates []store.Candidate) error {
 	const max = 60
 	for _, c := range candidates {
@@ -286,6 +308,9 @@ func HumanCandidates(w io.Writer, candidates []store.Candidate) error {
 	return nil
 }
 
+// HumanList writes one line per task to w, formatted as
+// "<id>  <yyyy-mm-dd hh:mm>  <description>". Returns the first write
+// error encountered.
 func HumanList(w io.Writer, tasks []task.Task) error {
 	for _, t := range tasks {
 		if _, err := fmt.Fprintf(w, "%s  %s  %s\n", t.ID, t.Created.Format("2006-01-02 15:04"), description(t)); err != nil {
