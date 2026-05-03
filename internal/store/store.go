@@ -4,7 +4,7 @@
 //
 // Directory layout. Open tasks live as files under tasks_dir/open and
 // closed tasks under tasks_dir/closed. Filenames follow the
-// "<RFC3339-minute>_<id>[_<slug>].md" pattern. Completing a task moves
+// "<RFC3339-minute>_<id>[_<slug>].md" pattern. Closing a task moves
 // its file from open to closed; reopening moves it back. Both directories
 // are created lazily on first use.
 //
@@ -224,12 +224,12 @@ func (s *Store) Get(fragment string) (task.Task, []byte, error) {
 	return l.task, l.raw, nil
 }
 
-// Complete marks the open task identified by fragment as completed at
+// Close marks the open task identified by fragment as completed at
 // the current time, rewrites the file with the new frontmatter, and
 // moves it from open/ to closed/. Returns [*ErrNoMatch] or
 // [*ErrAmbiguous] when fragment does not resolve to exactly one open
 // task.
-func (s *Store) Complete(fragment string) (task.Task, error) {
+func (s *Store) Close(fragment string) (task.Task, error) {
 	l, err := s.resolve(fragment, []string{"open"})
 	if err != nil {
 		return task.Task{}, err

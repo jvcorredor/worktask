@@ -48,7 +48,7 @@ The reference slash command for Claude Code is a thin wrapper. It does not read 
 
 | Subcommands | How the wrapper invokes them | Notes |
 |-------------|------------------------------|-------|
-| `add`, `list`, `show`, `update`, `append`, `complete`, `reopen` | Shell out with `--format=json`. On exit 0, pass success output through. On non-zero exit, branch on the `error` discriminator. | Uniform shape across all of them. |
+| `add`, `list`, `show`, `update`, `append`, `close`, `reopen` | Shell out with `--format=json`. On exit 0, pass success output through. On non-zero exit, branch on the `error` discriminator. | Uniform shape across all of them. |
 | `edit` | Does **not** shell out. Validate the fragment via `show`, then tell the user to run `worktask edit <id>` from their own shell. | The binary `syscall.Exec`s `$EDITOR`, which is unusable from an agent shell. |
 
 ## Reference slash command

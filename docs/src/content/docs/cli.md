@@ -21,7 +21,7 @@ worktask list [--all] [--closed] [--limit N]
 worktask show <fragment>
 worktask update <fragment> <new description>
 worktask append <fragment> <text>
-worktask complete <fragment>
+worktask close <fragment>
 worktask reopen <fragment>
 worktask edit <fragment>
 worktask research [<fragment>]
@@ -98,17 +98,17 @@ Adds text to the body of a task, preserving everything above it.
 $ worktask append milk remember the brand
 ```
 
-## `complete`
+## `close`
 
 Moves the file from `open/` to `closed/` via `os.Rename` and stamps `completed:` into the frontmatter.
 
 ```
-$ worktask complete milk
+$ worktask close milk
 ```
 
 ## `reopen`
 
-The inverse of `complete`: moves the file back to `open/` and clears the `completed:` field.
+The inverse of `close`: moves the file back to `open/` and clears the `completed:` field.
 
 ```
 $ worktask reopen milk
