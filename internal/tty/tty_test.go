@@ -11,8 +11,16 @@ func TestIsTerminal_pipeIsNotTerminal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.Pipe: %v", err)
 	}
-	defer r.Close()
-	defer w.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			t.Errorf("r.Close: %v", err)
+		}
+	}()
+	defer func() {
+		if err := w.Close(); err != nil {
+			t.Errorf("w.Close: %v", err)
+		}
+	}()
 
 	if IsTerminal(w) {
 		t.Fatalf("IsTerminal returned true for an os.Pipe writer; want false")
@@ -30,8 +38,16 @@ func TestWidth_pipeReturnsNotOK(t *testing.T) {
 	if err != nil {
 		t.Fatalf("os.Pipe: %v", err)
 	}
-	defer r.Close()
-	defer w.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			t.Errorf("r.Close: %v", err)
+		}
+	}()
+	defer func() {
+		if err := w.Close(); err != nil {
+			t.Errorf("w.Close: %v", err)
+		}
+	}()
 
 	cols, ok := Width(w)
 	if ok {
