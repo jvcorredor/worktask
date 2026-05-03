@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var completeCmd = &cobra.Command{
-	Use:   "complete <fragment>",
+var closeCmd = &cobra.Command{
+	Use:   "close <fragment>",
 	Short: "Move a task from open to closed and stamp completed",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -14,15 +14,15 @@ var completeCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		t, err := s.Complete(fragment)
+		t, err := s.Close(fragment)
 		if err != nil {
 			return handleResolveError(cmd, s, fragment, err)
 		}
-		cmd.Printf("completed %s\n", t.ID)
+		cmd.Printf("closed %s\n", t.ID)
 		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(completeCmd)
+	rootCmd.AddCommand(closeCmd)
 }

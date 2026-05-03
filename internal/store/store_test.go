@@ -292,7 +292,7 @@ func TestGet_resolvesClosedTasks(t *testing.T) {
 	}
 }
 
-func TestComplete_movesFileFromOpenToClosedAndStampsCompleted(t *testing.T) {
+func TestClose_movesFileFromOpenToClosedAndStampsCompleted(t *testing.T) {
 	dir := t.TempDir()
 	s := New(dir)
 	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
@@ -304,9 +304,9 @@ func TestComplete_movesFileFromOpenToClosedAndStampsCompleted(t *testing.T) {
 	completedAt := time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC)
 	s.Now = func() time.Time { return completedAt }
 
-	got, err := s.Complete("abcdef12")
+	got, err := s.Close("abcdef12")
 	if err != nil {
-		t.Fatalf("Complete: %v", err)
+		t.Fatalf("Close: %v", err)
 	}
 	if got.ID != "abcdef12" {
 		t.Errorf("got.ID = %q; want %q", got.ID, "abcdef12")
@@ -340,8 +340,8 @@ func TestReopen_movesFileFromClosedToOpenAndClearsCompleted(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
-	if _, err := s.Complete("abcdef12"); err != nil {
-		t.Fatalf("Complete: %v", err)
+	if _, err := s.Close("abcdef12"); err != nil {
+		t.Fatalf("Close: %v", err)
 	}
 
 	got, err := s.Reopen("abcdef12")
@@ -371,7 +371,7 @@ func TestReopen_movesFileFromClosedToOpenAndClearsCompleted(t *testing.T) {
 	}
 }
 
-func TestComplete_fragmentMatchingOnlyClosedReturnsNoMatch(t *testing.T) {
+func TestClose_fragmentMatchingOnlyClosedReturnsNoMatch(t *testing.T) {
 	dir := t.TempDir()
 	s := New(dir)
 	s.Now = func() time.Time { return time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC) }
@@ -380,13 +380,13 @@ func TestComplete_fragmentMatchingOnlyClosedReturnsNoMatch(t *testing.T) {
 		t.Fatalf("Add: %v", err)
 	}
 	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
-	if _, err := s.Complete("abcdef12"); err != nil {
-		t.Fatalf("first Complete: %v", err)
+	if _, err := s.Close("abcdef12"); err != nil {
+		t.Fatalf("first Close: %v", err)
 	}
 
-	_, err := s.Complete("abcdef12")
+	_, err := s.Close("abcdef12")
 	if err == nil {
-		t.Fatalf("Complete: expected error")
+		t.Fatalf("Close: expected error")
 	}
 	var nm *ErrNoMatch
 	if !errors.As(err, &nm) {
@@ -429,12 +429,12 @@ func TestList_filterClosedSortsByCompletedDescending(t *testing.T) {
 	}
 
 	s.Now = func() time.Time { return time.Date(2026, 4, 30, 9, 0, 0, 0, time.UTC) }
-	if _, err := s.Complete("11111111"); err != nil {
-		t.Fatalf("Complete first: %v", err)
+	if _, err := s.Close("11111111"); err != nil {
+		t.Fatalf("Close first: %v", err)
 	}
 	s.Now = func() time.Time { return time.Date(2026, 4, 30, 10, 0, 0, 0, time.UTC) }
-	if _, err := s.Complete("22222222"); err != nil {
-		t.Fatalf("Complete second: %v", err)
+	if _, err := s.Close("22222222"); err != nil {
+		t.Fatalf("Close second: %v", err)
 	}
 
 	tasks, err := s.List(FilterClosed, 20)
@@ -464,8 +464,8 @@ func TestList_filterClosedHonorsLimit(t *testing.T) {
 			t.Fatalf("Add %d: %v", i, err)
 		}
 		s.Now = func() time.Time { return time.Date(2026, 4, 30, hour, 0, 0, 0, time.UTC) }
-		if _, err := s.Complete(id); err != nil {
-			t.Fatalf("Complete %d: %v", i, err)
+		if _, err := s.Close(id); err != nil {
+			t.Fatalf("Close %d: %v", i, err)
 		}
 	}
 
@@ -493,8 +493,8 @@ func TestList_filterAllReturnsOpenUncappedAndClosedCapped(t *testing.T) {
 			t.Fatalf("Add closed %d: %v", i, err)
 		}
 		s.Now = func() time.Time { return time.Date(2026, 4, 30, hour, 0, 0, 0, time.UTC) }
-		if _, err := s.Complete(id); err != nil {
-			t.Fatalf("Complete %d: %v", i, err)
+		if _, err := s.Close(id); err != nil {
+			t.Fatalf("Close %d: %v", i, err)
 		}
 	}
 	for i := 0; i < 3; i++ {

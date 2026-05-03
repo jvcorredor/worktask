@@ -15,7 +15,7 @@ By design, none of the following are in the tool. Add later only if a real need 
 - Multi-machine sync
 - Concurrent-write locking
 - A `delete` subcommand
-- Batch `complete --all`
+- Batch `close --all`
 - Shell completion
 - TUI or `fzf` picker
 
