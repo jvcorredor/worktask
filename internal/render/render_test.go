@@ -574,6 +574,82 @@ func TestHumanShow_styledIncludesFaintPathLineBetweenMetadataAndBody(t *testing.
 	}
 }
 
+func TestHumanTagList_unstyledSpaceSeparatesEntries(t *testing.T) {
+	tagCounts := []store.TagCount{
+		{Name: "bug", Count: 3},
+		{Name: "infra", Count: 5},
+		{Name: "urgent", Count: 2},
+	}
+	var buf bytes.Buffer
+	if err := HumanTagList(&buf, tagCounts, false); err != nil {
+		t.Fatalf("HumanTagList: %v", err)
+	}
+	want, err := os.ReadFile("testdata/tag_ls_human_unstyled.txt")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Errorf("HumanTagList unstyled does not match snapshot.\n--- got ---\n%q\n--- want ---\n%q", buf.String(), string(want))
+	}
+}
+
+func TestHumanTagList_emptyEmitsBlankLine(t *testing.T) {
+	var buf bytes.Buffer
+	if err := HumanTagList(&buf, nil, false); err != nil {
+		t.Fatalf("HumanTagList: %v", err)
+	}
+	if buf.String() != "\n" {
+		t.Errorf("empty HumanTagList = %q; want %q", buf.String(), "\n")
+	}
+}
+
+func TestHumanTagList_styledMatchesUnstyled(t *testing.T) {
+	tagCounts := []store.TagCount{
+		{Name: "bug", Count: 3},
+		{Name: "infra", Count: 5},
+	}
+	var styledBuf, unstyledBuf bytes.Buffer
+	if err := HumanTagList(&styledBuf, tagCounts, true); err != nil {
+		t.Fatalf("HumanTagList styled: %v", err)
+	}
+	if err := HumanTagList(&unstyledBuf, tagCounts, false); err != nil {
+		t.Fatalf("HumanTagList unstyled: %v", err)
+	}
+	if !bytes.Equal(styledBuf.Bytes(), unstyledBuf.Bytes()) {
+		t.Errorf("styled and unstyled outputs must be byte-identical for tag list.\n--- styled ---\n%q\n--- unstyled ---\n%q", styledBuf.String(), unstyledBuf.String())
+	}
+}
+
+func TestJSONTagList_emptyEmitsTagsEmptyArray(t *testing.T) {
+	got, err := JSONTagList(nil)
+	if err != nil {
+		t.Fatalf("JSONTagList: %v", err)
+	}
+	want := "{\n  \"tags\": []\n}\n"
+	if string(got) != want {
+		t.Errorf("empty JSONTagList:\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONTagList_matchesSnapshot(t *testing.T) {
+	tagCounts := []store.TagCount{
+		{Name: "bug", Count: 3},
+		{Name: "infra", Count: 5},
+		{Name: "urgent", Count: 2},
+	}
+	got, err := JSONTagList(tagCounts)
+	if err != nil {
+		t.Fatalf("JSONTagList: %v", err)
+	}
+	want, err := os.ReadFile("testdata/tag_ls.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
 func TestJSONShow_matchesSnapshot(t *testing.T) {
 	tk := task.Task{
 		ID:      "abcdef12",

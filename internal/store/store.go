@@ -135,6 +135,37 @@ func (s *Store) Add(description string, tags ...string) (task.Task, error) {
 	return t, nil
 }
 
+// TagCount is one entry in the result of [Store.ListTags]: a tag name
+// and the number of tasks (within the requested filter) that carry it.
+type TagCount struct {
+	Name  string
+	Count int
+}
+
+// ListTags scans the tasks selected by filter and returns each distinct
+// tag in use along with the count of tasks carrying it, sorted by Name.
+// Tags with zero occurrences never appear (the listing is derived from
+// task files; tags are not pre-registered). A missing subdirectory is
+// treated as empty rather than as an error.
+func (s *Store) ListTags(filter Filter) ([]TagCount, error) {
+	tasks, err := s.List(filter, 0)
+	if err != nil {
+		return nil, err
+	}
+	counts := make(map[string]int)
+	for _, t := range tasks {
+		for _, name := range t.Tags {
+			counts[name]++
+		}
+	}
+	out := make([]TagCount, 0, len(counts))
+	for name, n := range counts {
+		out = append(out, TagCount{Name: name, Count: n})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out, nil
+}
+
 // List returns the tasks selected by filter. Open tasks are returned in
 // directory order; closed tasks are sorted by Completed descending and
 // truncated to closedLimit when closedLimit is positive. When filter is

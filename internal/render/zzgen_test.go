@@ -1,9 +1,12 @@
 package render
 
 import (
+	"bytes"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/jvcorredor/worktask/internal/store"
 )
 
 // TestZGenerateGoldenFiles is a one-shot helper enabled with WORKTASK_GOLDEN=1
@@ -46,6 +49,23 @@ func TestZGenerateGoldenFiles(t *testing.T) {
 			Error: "context deadline exceeded",
 		})
 	})
+	emit("tag_ls.json", func() ([]byte, error) {
+		return JSONTagList([]store.TagCount{
+			{Name: "bug", Count: 3},
+			{Name: "infra", Count: 5},
+			{Name: "urgent", Count: 2},
+		})
+	})
+	emit("tag_ls_human_unstyled.txt", func() ([]byte, error) {
+		var buf bytes.Buffer
+		err := HumanTagList(&buf, []store.TagCount{
+			{Name: "bug", Count: 3},
+			{Name: "infra", Count: 5},
+			{Name: "urgent", Count: 2},
+		}, false)
+		return buf.Bytes(), err
+	})
+
 	emit("research_summary.json", func() ([]byte, error) {
 		return JSONResearchSummary(ResearchSummary{
 			BatchID:  "2026-05-01T14:00:00Z",

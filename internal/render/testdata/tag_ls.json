@@ -1,0 +1,16 @@
+{
+  "tags": [
+    {
+      "name": "bug",
+      "count": 3
+    },
+    {
+      "name": "infra",
+      "count": 5
+    },
+    {
+      "name": "urgent",
+      "count": 2
+    }
+  ]
+}
