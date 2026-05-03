@@ -51,6 +51,48 @@ func TestLoad_missingOverrideFallsBackToEmbedded(t *testing.T) {
 	}
 }
 
+func TestEmbeddedDefault_namesNoInstallSpecificMCPsOrGhPatterns(t *testing.T) {
+	// The shipped binary cannot assume any particular MCP server is
+	// installed. Naming `mcp__claude_ai_*`, `mcp__unblocked__*`,
+	// `mcp__context7__*`, or `Bash(gh ...)` identifiers in the embedded
+	// prompt would push the agent toward tools a fresh-install user does
+	// not have. Claude Code injects the actually-available tools into its
+	// system prompt, so the agent discovers them without `worktask`
+	// naming them.
+	got, err := Load("")
+	if err != nil {
+		t.Fatalf("Load(\"\"): %v", err)
+	}
+	forbidden := []string{
+		"mcp__claude_ai_",
+		"mcp__unblocked__",
+		"mcp__context7__",
+		"Bash(gh",
+	}
+	for _, sub := range forbidden {
+		if strings.Contains(got, sub) {
+			t.Errorf("embedded prompt must not name install-specific identifier %q", sub)
+		}
+	}
+}
+
+func TestEmbeddedDefault_retainsAbstractAnchorGuidance(t *testing.T) {
+	// The prompt should still steer the agent to the right kind of tool
+	// for each anchor type, just abstractly. Loss of this guidance would
+	// degrade research quality in lockstep with the identifier strip.
+	got, err := Load("")
+	if err != nil {
+		t.Fatalf("Load(\"\"): %v", err)
+	}
+	lower := strings.ToLower(got)
+	mustMention := []string{"slack", "jira", "datadog", "library", "gh "}
+	for _, sub := range mustMention {
+		if !strings.Contains(lower, sub) {
+			t.Errorf("embedded prompt missing abstract anchor guidance for %q", sub)
+		}
+	}
+}
+
 func TestRender_substitutesBodyVerbatim(t *testing.T) {
 	tmpl := "Research this task body:\n{{.Body}}\n--end--\n"
 	tk := task.Task{
