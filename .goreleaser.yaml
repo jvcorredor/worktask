@@ -27,10 +27,13 @@ builds:
       - -X github.com/jvcorredor/worktask/internal/version.Date={{ .Date }}
 
 archives:
+  # `format:` (singular) and the absence of `ids:` are required for
+  # compatibility with the goreleaser library version pinned by
+  # hooks-goreleaser (currently goreleaser v2.3.2). The newer
+  # `formats: [tar.gz]` and `ids: [worktask]` schema fields are
+  # rejected by that version's unmarshaller.
   - id: worktask
-    ids:
-      - worktask
-    formats: [tar.gz]
+    format: tar.gz
     name_template: worktask_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     files:
       - LICENSE
