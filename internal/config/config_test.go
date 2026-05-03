@@ -258,10 +258,10 @@ func TestLoad_rejectsWriteCapableEntriesInExtraTools(t *testing.T) {
 	// with a write-capable extra never escapes the package.
 	const goodEntry = "mcp__claude_ai_Slack__slack_read_thread"
 	cases := []struct {
-		name     string
-		extras   []string
-		bad      string
-		wantIdx  string // bracketed form expected in the error message
+		name    string
+		extras  []string
+		bad     string
+		wantIdx string // bracketed form expected in the error message
 	}{
 		{"bareEdit", []string{"Edit"}, "Edit", "[0]"},
 		{"bareWrite", []string{goodEntry, "Write"}, "Write", "[1]"},

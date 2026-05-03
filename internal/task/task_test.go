@@ -39,11 +39,11 @@ func TestRoundTrip_researchFieldsSet(t *testing.T) {
 	created := time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC)
 	lastResearched := time.Date(2026, 5, 1, 14, 0, 0, 0, time.UTC)
 	original := Task{
-		ID:               "abcdef12",
-		Created:          created,
-		LastResearched:   lastResearched,
-		LastResearchLog:  "research-logs/abcdef12_2026-05-01T14-00.jsonl",
-		Body:             "buy milk\n",
+		ID:              "abcdef12",
+		Created:         created,
+		LastResearched:  lastResearched,
+		LastResearchLog: "research-logs/abcdef12_2026-05-01T14-00.jsonl",
+		Body:            "buy milk\n",
 	}
 	data, err := Encode(original)
 	if err != nil {
