@@ -65,6 +65,12 @@ curl -fsSL https://raw.githubusercontent.com/jvcorredor/worktask/main/docs/src/c
 The file's frontmatter is Claude-Code-compatible (`description:`, `argument-hint:`); the additional `title:` key Starlight needs is ignored by Claude Code, so the raw download is a drop-in slash command source.
 :::
 
+## Research-agent allowlist
+
+`worktask research` spawns a headless Claude Code subagent under `--permission-mode=bypassPermissions`, with an explicit `--allowed-tools` list. That list is the security boundary, and it is config-driven on a per-machine basis: the shipped binary contributes a vanilla baseline of five built-in read-only tools (`Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`), and the user's `config.toml` extends it via [`research_extra_tools`](./config.md#research_extra_tools). MCP tool names and pattern-restricted `Bash(...)` invocations belong in the config, not in the binary.
+
+If you are wrapping `worktask research` from another agent, you do not need to thread tool names through the wrapper — they live in the operator's `config.toml`. The CLI surface (subcommand name, flags, JSON output, exit-code envelope) is unchanged by the allowlist mechanism.
+
 ## Skills
 
 Claude Code also exposes a wrapper surface called *skills* alongside slash commands. A `worktask` skill is a viable future direction — no worked example is included here yet because there isn't one to vendor.

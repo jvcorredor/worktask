@@ -85,9 +85,10 @@ func runSingleResearch(cmd *cobra.Command, cfg config.Config, s *store.Store, fr
 	}
 
 	result, runErr := runner.Run(context.Background(), runner.RunInput{
-		Prompt:  rendered,
-		LogPath: logPath,
-		Model:   resolveResearchModel(cfg),
+		Prompt:     rendered,
+		LogPath:    logPath,
+		Model:      resolveResearchModel(cfg),
+		ExtraTools: cfg.ResearchExtraTools,
 	}, runner.OSExec{})
 	if runErr != nil {
 		result = runner.Result{
@@ -179,11 +180,13 @@ func runBatchResearch(cmd *cobra.Command, cfg config.Config, s *store.Store) err
 	defer cancel()
 
 	model := resolveResearchModel(cfg)
+	extraTools := cfg.ResearchExtraTools
 	runFn := func(ctx context.Context, item pool.Item) (runner.Result, error) {
 		return runner.Run(ctx, runner.RunInput{
-			Prompt:  item.Prompt,
-			LogPath: meta[item.Task.ID].logPath,
-			Model:   model,
+			Prompt:     item.Prompt,
+			LogPath:    meta[item.Task.ID].logPath,
+			Model:      model,
+			ExtraTools: extraTools,
 		}, runner.OSExec{})
 	}
 

@@ -99,6 +99,42 @@ func TestBuildCommand_allowedToolsIsExactlyTheVanillaBaseline(t *testing.T) {
 	}
 }
 
+func TestBuildCommand_allowedToolsAppendsExtraToolsAfterBaseline(t *testing.T) {
+	// User extras are config-owned and threaded through RunInput.ExtraTools.
+	// They are appended to the in-source baseline verbatim (no
+	// transformations, no deduplication) so the user gets exactly what they
+	// wrote. Validation has already happened at config load.
+	cmd := BuildCommand(RunInput{
+		Prompt: "x",
+		ExtraTools: []string{
+			"mcp__claude_ai_Slack__slack_read_thread",
+			"Bash(gh pr view:*)",
+		},
+	})
+
+	got := allowedToolsFlag(cmd.Args)
+	if got == "" {
+		t.Fatalf("Args missing --allowed-tools flag; got %v", cmd.Args)
+	}
+	want := "Read,Glob,Grep,WebSearch,WebFetch,mcp__claude_ai_Slack__slack_read_thread,Bash(gh pr view:*)"
+	if got != want {
+		t.Errorf("--allowed-tools mismatch:\n got: %s\nwant: %s", got, want)
+	}
+}
+
+func TestBuildCommand_extraToolsNilLeavesBaselineUnchanged(t *testing.T) {
+	// A nil ExtraTools must produce exactly the vanilla baseline; an unset
+	// field (the fresh-install case with no config.toml) must not alter the
+	// shipped allowlist.
+	cmd := BuildCommand(RunInput{Prompt: "x"})
+
+	got := allowedToolsFlag(cmd.Args)
+	want := "Read,Glob,Grep,WebSearch,WebFetch"
+	if got != want {
+		t.Errorf("--allowed-tools mismatch:\n got: %s\nwant: %s", got, want)
+	}
+}
+
 func TestBuildCommand_allowedToolsExcludesBuiltInWrites(t *testing.T) {
 	// Safety net against accidental additions to the baseline. The shipped
 	// binary must never grant the agent write-capable built-ins, and must

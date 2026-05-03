@@ -32,6 +32,11 @@ type RunInput struct {
 	// Model overrides the model the headless agent runs as. Empty means
 	// DefaultModel.
 	Model string
+	// ExtraTools is appended verbatim to the baseline allowlist in the
+	// --allowed-tools argument. Validation is the caller's responsibility:
+	// by the time a RunInput exists, ExtraTools is known-clean (the config
+	// package's ValidateExtraTools has rejected anything write-capable).
+	ExtraTools []string
 }
 
 // Command is a description of the child process to spawn. It is returned
@@ -236,6 +241,8 @@ func BuildCommand(in RunInput) Command {
 	if model == "" {
 		model = DefaultModel
 	}
+	tools := append([]string(nil), allowedTools...)
+	tools = append(tools, in.ExtraTools...)
 	return Command{
 		Bin: "claude",
 		Args: []string{
@@ -245,7 +252,7 @@ func BuildCommand(in RunInput) Command {
 			"--verbose",
 			"--permission-mode=bypassPermissions",
 			"--model=" + model,
-			"--allowed-tools=" + strings.Join(allowedTools, ","),
+			"--allowed-tools=" + strings.Join(tools, ","),
 		},
 		Stdin: in.Prompt,
 	}
