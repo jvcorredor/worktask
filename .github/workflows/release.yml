@@ -36,11 +36,15 @@ jobs:
       # project on the 0.x track and treats breaking changes as
       # minor bumps until a 1.0.0 release exists; once it does, the
       # flag is silently ignored and breaking changes resume bumping
-      # major.
+      # major. --allow-no-changes makes "no release computed" a
+      # documented exit-0 path, so chore-only pushes produce a green
+      # workflow with no new tag rather than relying on the action's
+      # wrapping behavior.
       - name: Run semantic-release
         uses: go-semantic-release/action@v1
         with:
           allow-initial-development-versions: true
+          custom-arguments: --allow-no-changes
           hooks: goreleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
