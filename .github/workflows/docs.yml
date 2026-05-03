@@ -5,7 +5,12 @@ on:
     branches:
       - main
     paths:
-      - docs/**
+      - docs/src/**
+      - docs/astro.config.mjs
+      - docs/package.json
+      - docs/yarn.lock
+      - docs/.yarnrc.yml
+      - docs/.yarn/**
       - .github/workflows/docs.yml
 
 concurrency:
