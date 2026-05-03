@@ -45,14 +45,7 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	cfg := Config{
-		TasksDir:           fc.TasksDir,
-		Editor:             fc.Editor,
-		ResearchPromptPath: fc.ResearchPromptPath,
-		WorkingLogPath:     fc.WorkingLogPath,
-		ResearchModel:      fc.ResearchModel,
-		ResearchExtraTools: fc.ResearchExtraTools,
-	}
+	cfg := Config(fc)
 	if cfg.TasksDir == "" {
 		cfg.TasksDir = defaultTasksDir()
 	}

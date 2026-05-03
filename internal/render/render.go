@@ -105,14 +105,7 @@ type jsonResearchRun struct {
 }
 
 func JSONResearchRun(r ResearchRun) ([]byte, error) {
-	return marshalIndent(jsonResearchRun{
-		ID:          r.ID,
-		Description: r.Description,
-		Status:      r.Status,
-		Summary:     r.Summary,
-		LogPath:     r.LogPath,
-		Error:       r.Error,
-	})
+	return marshalIndent(jsonResearchRun(r))
 }
 
 // ResearchEvent is one streaming progress event emitted as a single JSON
@@ -209,15 +202,7 @@ type jsonResearchSummaryTotals struct {
 func JSONResearchSummary(s ResearchSummary) ([]byte, error) {
 	results := make([]jsonResearchSummaryResult, 0, len(s.Results))
 	for _, r := range s.Results {
-		results = append(results, jsonResearchSummaryResult{
-			ID:          r.ID,
-			Description: r.Description,
-			Status:      r.Status,
-			Summary:     r.Summary,
-			LogPath:     r.LogPath,
-			Tokens:      r.Tokens,
-			Error:       r.Error,
-		})
+		results = append(results, jsonResearchSummaryResult(r))
 	}
 	return marshalIndent(jsonResearchSummary{
 		BatchID:  s.BatchID,

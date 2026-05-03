@@ -131,7 +131,7 @@ func Run(ctx context.Context, in RunInput, exec Exec) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("runner: create log: %w", err)
 	}
-	defer logFile.Close()
+	defer func() { _ = logFile.Close() }()
 
 	stdout, err := exec.Run(ctx, cmd)
 	if err != nil {

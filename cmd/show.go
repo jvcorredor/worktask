@@ -61,7 +61,7 @@ func handleResolveError(cmd *cobra.Command, s *store.Store, fragment string, err
 				return werr
 			}
 		} else {
-			fmt.Fprintf(cmd.ErrOrStderr(), "ambiguous fragment %q. matches:\n", fragment)
+			cmd.PrintErrf("ambiguous fragment %q. matches:\n", fragment)
 			if rerr := render.HumanCandidates(cmd.ErrOrStderr(), amb.Candidates); rerr != nil {
 				return rerr
 			}
@@ -81,7 +81,7 @@ func handleResolveError(cmd *cobra.Command, s *store.Store, fragment string, err
 				return werr
 			}
 		} else {
-			fmt.Fprintf(cmd.ErrOrStderr(), "no match for %q. open tasks:\n", fragment)
+			cmd.PrintErrf("no match for %q. open tasks:\n", fragment)
 			if rerr := render.HumanList(cmd.ErrOrStderr(), openTasks); rerr != nil {
 				return rerr
 			}
