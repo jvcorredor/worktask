@@ -19,7 +19,7 @@ curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
 ### From source
 
 ```
-go install github.com/jvcorredor/worktask@latest                    # from source
+go install github.com/jvcorredor/worktask@latest
 ```
 
 The binary lands in `$HOME/.local/bin` (or `$GOBIN` for `go install`) as `worktask`. See the [install reference](https://jvcorredor.github.io/worktask/install/) for env-var overrides and `$PATH` setup.
