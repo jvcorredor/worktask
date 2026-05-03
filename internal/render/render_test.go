@@ -360,6 +360,76 @@ func TestHumanCandidates_unstyledMultipleMatchesSnapshot(t *testing.T) {
 	}
 }
 
+func TestHumanList_styledIncludesTagsColumn(t *testing.T) {
+	tasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Tags:    []string{"bug", "urgent"},
+			Body:    "first task\n",
+		},
+		{
+			ID:      "22222222",
+			Created: time.Date(2026, 4, 28, 10, 0, 0, 0, time.UTC),
+			Body:    "no tags task\n",
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanList(&buf, tasks, true); err != nil {
+		t.Fatalf("HumanList styled: %v", err)
+	}
+
+	out := buf.String()
+
+	if !strings.Contains(out, "TAGS") {
+		t.Errorf("styled HumanList must include TAGS header, got:\n%s", out)
+	}
+	if !strings.Contains(out, "[bug, urgent]") {
+		t.Errorf("styled HumanList must show [bug, urgent] for tagged task, got:\n%s", out)
+	}
+	if !strings.Contains(out, "[]") {
+		t.Errorf("styled HumanList must show [] for task with no tags, got:\n%s", out)
+	}
+}
+
+func TestHumanList_unstyledIncludesTagsColumn(t *testing.T) {
+	tasks := []task.Task{
+		{
+			ID:      "11111111",
+			Created: time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC),
+			Tags:    []string{"bug", "urgent"},
+			Body:    "first task\n",
+		},
+		{
+			ID:      "22222222",
+			Created: time.Date(2026, 4, 28, 10, 0, 0, 0, time.UTC),
+			Body:    "no tags task\n",
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := HumanList(&buf, tasks, false); err != nil {
+		t.Fatalf("HumanList: %v", err)
+	}
+
+	out := buf.String()
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 lines, got %d:\n%s", len(lines), out)
+	}
+
+	if !strings.Contains(lines[0], "[bug, urgent]") {
+		t.Errorf("first line should contain [bug, urgent], got %q", lines[0])
+	}
+	if !strings.Contains(lines[1], "[]") {
+		t.Errorf("second line should contain [] for empty tags, got %q", lines[1])
+	}
+	if !strings.Contains(lines[1], "no tags task") {
+		t.Errorf("second line should still contain description, got %q", lines[1])
+	}
+}
+
 func TestHumanList_unstyledEmptyList(t *testing.T) {
 	var buf bytes.Buffer
 	if err := HumanList(&buf, []task.Task{}, false); err != nil {
@@ -423,6 +493,47 @@ func TestHumanList_unstyledLongDescriptionsNotTruncated(t *testing.T) {
 	}
 	if strings.ContainsRune(out, '…') {
 		t.Errorf("unstyled output must not truncate with ellipsis, got %q", out)
+	}
+}
+
+func TestHumanShow_styledMetadataStripShowsTagsWhenPresent(t *testing.T) {
+	tk := task.Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Tags:    []string{"bug", "urgent"},
+		Body:    "fix login\n",
+	}
+
+	var buf bytes.Buffer
+	if err := HumanShow(&buf, tk, []byte("---\nid: abcdef12\n---\nfix login\n"), "/tasks/open/abc.md", true); err != nil {
+		t.Fatalf("HumanShow styled: %v", err)
+	}
+
+	out := buf.String()
+	lines := strings.Split(out, "\n")
+
+	if !strings.Contains(lines[0], "[bug, urgent]") {
+		t.Errorf("metadata strip must contain [bug, urgent] when tags present, got %q", lines[0])
+	}
+}
+
+func TestHumanShow_styledMetadataStripOmitsTagsWhenEmpty(t *testing.T) {
+	tk := task.Task{
+		ID:      "abcdef12",
+		Created: time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		Body:    "buy milk\n",
+	}
+
+	var buf bytes.Buffer
+	if err := HumanShow(&buf, tk, []byte("---\nid: abcdef12\n---\nbuy milk\n"), "/tasks/open/abc.md", true); err != nil {
+		t.Fatalf("HumanShow styled: %v", err)
+	}
+
+	out := buf.String()
+	lines := strings.Split(out, "\n")
+
+	if strings.Contains(lines[0], "[") || strings.Contains(lines[0], "]") {
+		t.Errorf("metadata strip must not contain bracket segment when tags empty, got %q", lines[0])
 	}
 }
 

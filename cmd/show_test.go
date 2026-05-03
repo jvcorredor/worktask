@@ -135,9 +135,9 @@ func TestShowCmd_humanAmbiguousPipeModeIsPlain(t *testing.T) {
 // TestShowCmd_humanNoMatchPipeModeIsPlain is the end-to-end pipe-mode
 // test for the no-match error block: when stderr is a non-TTY writer
 // (here, *bytes.Buffer), the open-tasks listing must be byte-identical
-// to today's plain `<id>  <YYYY-MM-DD HH:MM>  <description>\n` rendering
-// with no header and no ANSI escapes, and the leading prose line must
-// be unchanged.
+// to today's plain `<id>  <YYYY-MM-DD HH:MM>  [tags]  <description>\n`
+// rendering with no header and no ANSI escapes, and the leading prose
+// line must be unchanged.
 func TestShowCmd_humanNoMatchPipeModeIsPlain(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", tmp)
@@ -179,8 +179,8 @@ func TestShowCmd_humanNoMatchPipeModeIsPlain(t *testing.T) {
 	}
 
 	want := "no match for \"zzz\". open tasks:\n" +
-		"11111111  2026-04-29 09:00  first task\n" +
-		"22222222  2026-04-29 10:30  second task\n"
+		"11111111  2026-04-29 09:00  []  first task\n" +
+		"22222222  2026-04-29 10:30  []  second task\n"
 
 	if stderr.String() != want {
 		t.Errorf("no-match pipe-mode stderr does not match plain rendering.\n--- got ---\n%s\n--- want ---\n%s", stderr.String(), want)
