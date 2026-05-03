@@ -272,7 +272,7 @@ func TestHumanShow_unstyledOpenTaskPassesRawThrough(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := HumanShow(&buf, tk, raw, false); err != nil {
+	if err := HumanShow(&buf, tk, raw, "/some/path.md", false); err != nil {
 		t.Fatalf("HumanShow: %v", err)
 	}
 	if !bytes.Equal(buf.Bytes(), raw) {
@@ -294,7 +294,7 @@ func TestHumanShow_unstyledClosedTaskPassesRawThrough(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := HumanShow(&buf, tk, raw, false); err != nil {
+	if err := HumanShow(&buf, tk, raw, "/some/path.md", false); err != nil {
 		t.Fatalf("HumanShow: %v", err)
 	}
 	if !bytes.Equal(buf.Bytes(), raw) {
@@ -423,6 +423,43 @@ func TestHumanList_unstyledLongDescriptionsNotTruncated(t *testing.T) {
 	}
 	if strings.ContainsRune(out, '…') {
 		t.Errorf("unstyled output must not truncate with ellipsis, got %q", out)
+	}
+}
+
+func TestHumanShow_styledIncludesFaintPathLineBetweenMetadataAndBody(t *testing.T) {
+	raw, err := os.ReadFile("testdata/show_open.md")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	tk, err := task.Decode(raw)
+	if err != nil {
+		t.Fatalf("task.Decode: %v", err)
+	}
+
+	taskPath := "/tasks/open/2026-04-29T11-30_abcdef12_buy-milk.md"
+
+	var buf bytes.Buffer
+	if err := HumanShow(&buf, tk, raw, taskPath, true); err != nil {
+		t.Fatalf("HumanShow styled: %v", err)
+	}
+
+	out := buf.String()
+
+	if !strings.Contains(out, taskPath) {
+		t.Errorf("styled HumanShow output must contain the path %q, got:\n%s", taskPath, out)
+	}
+
+	lines := strings.Split(out, "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected at least 3 lines (metadata, path, body), got %d:\n%s", len(lines), out)
+	}
+
+	if !strings.Contains(lines[1], taskPath) {
+		t.Errorf("second line must contain the path; got line %q", lines[1])
+	}
+
+	if strings.Contains(lines[0], taskPath) {
+		t.Errorf("first line (metadata strip) must not contain the path; got %q", lines[0])
 	}
 }
 

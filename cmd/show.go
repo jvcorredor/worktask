@@ -37,7 +37,7 @@ var showCmd = &cobra.Command{
 			return err
 		case formatHuman:
 			out := cmd.OutOrStdout()
-			return render.HumanShow(out, t, raw, tty.IsTerminal(out))
+			return render.HumanShow(out, t, raw, path, tty.IsTerminal(out))
 		default:
 			return fmt.Errorf("unknown format: %s", format)
 		}

@@ -32,19 +32,23 @@ var humanListAccent = lipgloss.AdaptiveColor{Light: "#5A4FCF", Dark: "#A29BFE"}
 
 // HumanShow writes a single task in human-format. When styled is false the
 // raw markdown bytes (frontmatter included) are written verbatim, preserving
-// the pipe-mode contract callers rely on for editing and round-tripping.
-// When styled is true the body is rendered through glamour with a one-line
-// metadata strip above it.
-func HumanShow(w io.Writer, t task.Task, raw []byte, styled bool) error {
+// the pipe-mode contract callers rely on for editing and round-tripping; the
+// path parameter is accepted but ignored. When styled is true the body is
+// rendered through glamour with a one-line metadata strip and a faint path
+// line above it.
+func HumanShow(w io.Writer, t task.Task, raw []byte, path string, styled bool) error {
 	if !styled {
 		_, err := w.Write(raw)
 		return err
 	}
-	return humanShowStyled(w, t)
+	return humanShowStyled(w, t, path)
 }
 
-func humanShowStyled(w io.Writer, t task.Task) error {
+func humanShowStyled(w io.Writer, t task.Task, path string) error {
 	if _, err := fmt.Fprintln(w, metadataStrip(t)); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintln(w, faintPath(path)); err != nil {
 		return err
 	}
 	wrap := wrapWidth(w)
@@ -70,6 +74,10 @@ func metadataStrip(t task.Task) string {
 	}
 	line := fmt.Sprintf("%s · %s · %s", t.ID, t.Created.Format("2006-01-02"), status)
 	return lipgloss.NewStyle().Faint(true).Render(line)
+}
+
+func faintPath(path string) string {
+	return lipgloss.NewStyle().Faint(true).Render(path)
 }
 
 func wrapWidth(w io.Writer) int {

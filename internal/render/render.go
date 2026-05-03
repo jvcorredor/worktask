@@ -17,6 +17,12 @@
 // and "path" (absolute, cleaned filesystem path of the task file;
 // symlinks in the configured tasks directory are preserved verbatim).
 //
+// Human show rendering: in styled (TTY) mode, HumanShow prints a faint
+// metadata strip, a faint path line (bare absolute path, no label), and
+// a glamour-rendered body. In unstyled (pipe) mode, the raw markdown
+// bytes are written verbatim; the path parameter is accepted but ignored,
+// preserving the pipe-mode round-trip contract.
+//
 // JSON research-run schema (stable): per-task summary line emitted on stdout
 // when `worktask research <hash>` completes.
 //
