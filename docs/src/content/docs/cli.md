@@ -194,6 +194,7 @@ Flags:
 - `--concurrency N` (default `3`): max concurrent in-flight research runs in batch mode.
 - `--all`: force re-research of every open task, ignoring `last_researched`.
 - `--stale DURATION`: re-research tasks whose `last_researched` is older than this duration.
+- `--tag TAG` (batch mode only): scope the sweep to open tasks carrying this tag (exact match, lowercased before filtering). Composes as an additional AND with `--all`/`--stale` — tag filter is applied first, then staleness logic runs over the surviving tasks. A non-matching tag yields a normal completion with zero tasks researched. Rejected with an error in single-task mode (when a `<fragment>` is supplied).
 - `--timeout DURATION` (default `10m`): per-task hard timeout.
 - `--model ID`: claude model id; overrides `research_model` from `config.toml`.
 

@@ -58,7 +58,7 @@ When the CLI exits non-zero, parse stdout as JSON and branch on the `error` fiel
 1. Invoke via the `Bash` tool with `run_in_background=true`:
    - Single task: `worktask research "<frag>"`
    - Sweep all open tasks (skip already-researched): `worktask research`
-   - Pass through `--all`, `--stale=<dur>`, `--concurrency=N`, `--timeout=<dur>` flags if the user asked for them.
+   - Pass through `--all`, `--stale=<dur>`, `--tag=<tag>`, `--concurrency=N`, `--timeout=<dur>` flags if the user asked for them. `--tag` is batch-mode-only and composes as an additional AND with `--stale`/`--all`.
 2. Reply to the user with an immediate ack (e.g. "queued research on `<frag>`, I'll report when it lands") and stop. Do NOT block, poll, or sleep.
 3. The harness will notify you when the background bash exits. At that point read `BashOutput` for the run.
 4. Parse the **last** JSON object on stdout. Two shapes are possible:
