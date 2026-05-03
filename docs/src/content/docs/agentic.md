@@ -24,7 +24,7 @@ Pass `--format=json` to any subcommand to get machine-readable output. The schem
 
 `completed` is omitted on open tasks.
 
-`show` returns the same fields plus `body` (the full body string after the first description line) and `path` (the absolute, cleaned filesystem path of the task file; symlinks in the configured tasks directory are preserved verbatim).
+`show` returns the same fields plus `body` (the full body string after the first description line) and `path` (the absolute, cleaned filesystem path of the task file; symlinks in the configured tasks directory are preserved verbatim). Two optional research fields are emitted only when the task has been researched: `last_researched` (RFC 3339 timestamp in UTC) and `last_research_log` (absolute path to the research log file). Both mirror the YAML frontmatter keys and are omitted when empty.
 
 Golden fixtures for the JSON schema live in `internal/render/testdata/` in the repo and are the authoritative reference for any wire-format edge cases.
 

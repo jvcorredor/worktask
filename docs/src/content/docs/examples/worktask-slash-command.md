@@ -40,7 +40,7 @@ When the CLI exits non-zero, parse stdout as JSON and branch on the `error` fiel
 
 ## Success output
 
-- `list`, `show`, and `tag ls` return JSON. Render as a readable summary, or pass through. (`tag ls` returns `{"tags": [{"name": ..., "count": ...}, ...]}`; the `tags` key is always present.)
+- `list`, `show`, and `tag ls` return JSON. Render as a readable summary, or pass through. (`tag ls` returns `{"tags": [{"name": ..., "count": ...}, ...]}`; the `tags` key is always present. `show` may also include `last_researched` (RFC 3339 UTC) and `last_research_log` (absolute path) when the task has been researched; both are omitted otherwise.)
 - `add`, `update`, `append`, `close`, `reopen`, `tag add`, `tag rm` print a single line (e.g. `added 1e3900e4`). Pass through.
 
 ## `edit <frag>`

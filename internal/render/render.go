@@ -17,6 +17,11 @@
 // (full task body, including the canonical first line as "description")
 // and "path" (absolute, cleaned filesystem path of the task file;
 // symlinks in the configured tasks directory are preserved verbatim).
+// Two optional research fields mirror the YAML frontmatter keys defined
+// in the task package: "last_researched" (RFC 3339 timestamp in UTC) and
+// "last_research_log" (absolute path string). Both are emitted with
+// "omitempty" semantics — they are omitted entirely when the underlying
+// task has not been researched, so existing parsers continue to work.
 //
 // Human show rendering: in styled (TTY) mode, HumanShow prints a faint
 // metadata strip ({id} · {date} · {status} · [{tags}] — bracket segment
@@ -60,8 +65,10 @@ type jsonTask struct {
 
 type jsonShowTask struct {
 	jsonTask
-	Body string `json:"body"`
-	Path string `json:"path"`
+	Body            string `json:"body"`
+	Path            string `json:"path"`
+	LastResearched  string `json:"last_researched,omitempty"`
+	LastResearchLog string `json:"last_research_log,omitempty"`
 }
 
 type jsonMatch struct {
@@ -261,7 +268,12 @@ func marshalLine(v any) ([]byte, error) {
 // package documentation: the list-element fields plus the full body
 // and the absolute filesystem path of the task file.
 func JSONShow(t task.Task, path string) ([]byte, error) {
-	return marshalIndent(jsonShowTask{jsonTask: toJSONTask(t), Body: t.Body, Path: path})
+	out := jsonShowTask{jsonTask: toJSONTask(t), Body: t.Body, Path: path}
+	if !t.LastResearched.IsZero() {
+		out.LastResearched = t.LastResearched.UTC().Format(time.RFC3339)
+	}
+	out.LastResearchLog = t.LastResearchLog
+	return marshalIndent(out)
 }
 
 // JSONList renders tasks as the stable list-element schema described

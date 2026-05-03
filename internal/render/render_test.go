@@ -669,3 +669,25 @@ func TestJSONShow_matchesSnapshot(t *testing.T) {
 		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
 	}
 }
+
+func TestJSONShow_researchedMatchesSnapshot(t *testing.T) {
+	tk := task.Task{
+		ID:              "abcdef12",
+		Created:         time.Date(2026, 4, 29, 11, 30, 0, 0, time.UTC),
+		LastResearched:  time.Date(2026, 5, 1, 14, 0, 0, 0, time.UTC),
+		LastResearchLog: "/tasks/research-logs/abcdef12_2026-05-01T14-00-00.jsonl",
+		Body:            "buy milk\nremember the brand\n",
+	}
+
+	got, err := JSONShow(tk, "/tasks/open/2026-04-29T11-30_abcdef12_buy-milk.md")
+	if err != nil {
+		t.Fatalf("JSONShow: %v", err)
+	}
+	want, err := os.ReadFile("testdata/show_researched.json")
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
