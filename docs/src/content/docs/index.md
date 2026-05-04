@@ -1,11 +1,11 @@
 ---
-title: worktask
-description: A Go CLI for task management designed primarily for LLM-agent consumption (Claude Code), usable as a normal terminal CLI.
+title: Capture and investigate fast inbounds
+description: A Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and hand them off as entrypoints for agentic work in Claude Code.
 ---
 
-A Go CLI for task management designed primarily for LLM-agent consumption (Claude Code), usable as a normal terminal CLI.
+Worktask is a Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and turn them into entrypoints for agentic work in Claude Code. The funnel runs capture → soak → investigate → hand off; worktask owns capture and investigation, while shaping and handoff are left to downstream agents.
 
-Match resolution, ID generation, slug generation, and formatting all live in the CLI so the agent never has to read or rewrite task files itself. Tasks are plain markdown — `cat`, `grep`, `rg`, and `vim` work directly against the data directory without going through the binary.
+The CLI is the agent-first surface: match resolution, ID generation, slug generation, and formatting all live in the binary so the agent never has to read or rewrite task files itself. Tasks are plain markdown — `cat`, `grep`, `rg`, and `vim` work directly against the data directory without going through the binary.
 
 ## Install
 

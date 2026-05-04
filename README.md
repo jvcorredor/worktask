@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-jvcorredor.github.io%2Fworktask-blue)](https://jvcorredor.github.io/worktask/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Go CLI for task management designed primarily for LLM-agent consumption (Claude Code), usable as a normal terminal CLI.
+A Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and turn them into entrypoints for agentic work in Claude Code.
 
 ## Install
 
