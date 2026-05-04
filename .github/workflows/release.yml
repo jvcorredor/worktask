@@ -69,7 +69,7 @@ jobs:
 
       - name: Install btw via published install script
         run: |
-          curl -fsSL https://jvcorredor.github.io/btw/install.sh | sh
+          curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
           printf '%s/.local/bin\n' "$HOME" >>"$GITHUB_PATH"
 
       - name: Assert installed binary reports the released version
