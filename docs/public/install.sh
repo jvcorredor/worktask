@@ -1,7 +1,7 @@
 #!/bin/sh
 # btw installer — POSIX, no bashisms.
 #
-# Usage:  curl -fsSL https://jvcorredor.github.io/btw/install.sh | sh
+# Usage:  curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 #
 # Env vars:
 #   INSTALL_DIR   destination directory (default: $HOME/.local/bin)
