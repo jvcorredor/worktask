@@ -73,4 +73,4 @@ If you are wrapping `worktask research` from another agent, you do not need to t
 
 ## Skills
 
-Claude Code also exposes a wrapper surface called *skills* alongside slash commands. A `worktask` skill is a viable future direction — no worked example is included here yet because there isn't one to vendor.
+Claude Code also exposes a wrapper surface called *skills* alongside slash commands. There is no shipped `worktask` skill, and there will not be one — the soak phase between capture and investigation requires explicit user control over when investigation fires, which a wrapper that auto-chains stages would erase. The canonical end-to-end pattern is documented as recipes against existing CLI primitives on the [Agentic recipes](./agentic-recipes.md) page.

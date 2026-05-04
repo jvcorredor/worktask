@@ -32,5 +32,6 @@ The binary lands in `$GOBIN` as `worktask`. Alias to `wt` if you want a shorter 
 - [File & storage format](./storage.md) — data directory layout and the on-disk shape of a task file.
 - [Configuration](./config.md) — `tasks_dir`, `editor`, XDG paths, and resolution order.
 - [Agentic usage](./agentic.md) — JSON schema, error envelopes, and the slash-command dispatch pattern.
+- [Agentic recipes](./agentic-recipes.md) — capture / soak / investigate / hand off as recipes against existing CLI primitives.
 - [Releases](./releases.md) — Conventional Commits, pre-1.0 versioning policy, link to the GitHub Releases page.
 - [Design notes](./design.md) — out-of-scope items, internal package layout, and the migration tool.
