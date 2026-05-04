@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/id"
-	"github.com/jvcorredor/worktask/internal/slug"
-	"github.com/jvcorredor/worktask/internal/tag"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/id"
+	"github.com/jvcorredor/bytheway/internal/slug"
+	"github.com/jvcorredor/bytheway/internal/tag"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 const slugMaxLen = 40

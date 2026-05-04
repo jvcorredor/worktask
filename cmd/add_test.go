@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 func TestAddCmd_withTagsCreatesTaggedTask(t *testing.T) {

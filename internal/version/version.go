@@ -1,4 +1,4 @@
-// Package version reports the worktask binary's build identity.
+// Package version reports the btw binary's build identity.
 //
 // Resolution order, hidden behind [Get]:
 //
@@ -17,7 +17,7 @@ import "runtime/debug"
 
 // Version, Commit, and Date are the ldflags landing zone inside this
 // package. They are intentionally exported so a release build can wire
-// them via `-ldflags="-X github.com/jvcorredor/worktask/internal/version.Version=v1.2.3 ..."`.
+// them via `-ldflags="-X github.com/jvcorredor/bytheway/internal/version.Version=v1.2.3 ..."`.
 // Unset, [Get] falls back to module-proxy metadata or sentinel defaults.
 var (
 	Version string
@@ -35,7 +35,7 @@ var readBuildInfo = debug.ReadBuildInfo
 // Source records which resolution branch produced the values:
 // "ldflags", "buildinfo", or "default". Callers should treat the field
 // as part of the contract rather than a debugging aid; the JSON
-// rendering of `worktask version --format=json` exposes it.
+// rendering of `btw version --format=json` exposes it.
 type Info struct {
 	Version string
 	Commit  string

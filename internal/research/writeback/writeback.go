@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/research/runner"
-	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/bytheway/internal/research/runner"
+	"github.com/jvcorredor/bytheway/internal/store"
 )
 
 // Input is the side-effect payload for one research run.

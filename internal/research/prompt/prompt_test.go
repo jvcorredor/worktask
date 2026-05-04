@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 func TestLoad_emptyOverrideReturnsEmbeddedDefault(t *testing.T) {
@@ -57,7 +57,7 @@ func TestEmbeddedDefault_namesNoInstallSpecificMCPsOrGhPatterns(t *testing.T) {
 	// `mcp__context7__*`, or `Bash(gh ...)` identifiers in the embedded
 	// prompt would push the agent toward tools a fresh-install user does
 	// not have. Claude Code injects the actually-available tools into its
-	// system prompt, so the agent discovers them without `worktask`
+	// system prompt, so the agent discovers them without `btw`
 	// naming them.
 	got, err := Load("")
 	if err != nil {

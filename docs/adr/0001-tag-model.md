@@ -6,11 +6,11 @@ Accepted
 
 ## Context
 
-Worktask captures fast inbounds and shepherds them through a soak phase before investigation fires. During soak the user accumulates context on a captured task — `append`, `update`, and `edit` mutate the body — but those primitives don't answer *what kind of inbound this is*. A bug report soaks differently from a leadership question; an "incident postmortem" capture wants different downstream handling from a "Q3 roadmap decision" capture. Without a triage primitive, the soak-phase backlog is an undifferentiated stream and the user has to re-read each task to remember its shape.
+Bytheway captures fast inbounds and shepherds them through a soak phase before investigation fires. During soak the user accumulates context on a captured task — `append`, `update`, and `edit` mutate the body — but those primitives don't answer *what kind of inbound this is*. A bug report soaks differently from a leadership question; an "incident postmortem" capture wants different downstream handling from a "Q3 roadmap decision" capture. Without a triage primitive, the soak-phase backlog is an undifferentiated stream and the user has to re-read each task to remember its shape.
 
 Tags are the soak-phase triage label that fills that gap. The user attaches a short, lowercase identifier at capture time — `bug`, `urgent`, `roadmap`, `incident` — to mark intent without committing to a folder layout, a status enum, or a separate metadata store. The label travels with the task in its frontmatter, so it survives the file-based storage format and stays accessible to both human users and programmatic consumers (agents, scripts).
 
-A secondary use case follows from the same primitive: once a cohort of tasks carries the same label, batch-routing for sweeps is cheap. `worktask research --tag <tag>` fires investigation across the cohort in one pass; `worktask list --tag <tag>` produces a soak-phase backlog view scoped to one kind of inbound. These flows reuse the triage label rather than reintroducing a categorisation system.
+A secondary use case follows from the same primitive: once a cohort of tasks carries the same label, batch-routing for sweeps is cheap. `btw research --tag <tag>` fires investigation across the cohort in one pass; `btw list --tag <tag>` produces a soak-phase backlog view scoped to one kind of inbound. These flows reuse the triage label rather than reintroducing a categorisation system.
 
 The design must fit the existing frontmatter codec without breaking backward compatibility.
 

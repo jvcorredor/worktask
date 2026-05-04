@@ -3,17 +3,17 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://jvcorredor.github.io',
-  base: '/worktask',
+  base: '/bytheway',
   integrations: [
     starlight({
-      title: 'worktask',
+      title: 'bytheway',
       description:
         'A Go CLI for task management designed primarily for LLM-agent consumption (Claude Code), usable as a normal terminal CLI.',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/jvcorredor/worktask' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/jvcorredor/bytheway' },
       ],
       editLink: {
-        baseUrl: 'https://github.com/jvcorredor/worktask/edit/main/docs/',
+        baseUrl: 'https://github.com/jvcorredor/bytheway/edit/main/docs/',
       },
       lastUpdated: true,
       sidebar: [

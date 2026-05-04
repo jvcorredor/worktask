@@ -1,9 +1,9 @@
-# worktask
+# bytheway
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/jvcorredor/worktask.svg)](https://pkg.go.dev/github.com/jvcorredor/worktask)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jvcorredor/worktask)](https://goreportcard.com/report/github.com/jvcorredor/worktask)
-[![Release](https://img.shields.io/github/v/release/jvcorredor/worktask?label=release)](https://github.com/jvcorredor/worktask/releases)
-[![Docs](https://img.shields.io/badge/docs-jvcorredor.github.io%2Fworktask-blue)](https://jvcorredor.github.io/worktask/)
+[![Go Reference](https://pkg.go.dev/badge/github.com/jvcorredor/bytheway.svg)](https://pkg.go.dev/github.com/jvcorredor/bytheway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jvcorredor/bytheway)](https://goreportcard.com/report/github.com/jvcorredor/bytheway)
+[![Release](https://img.shields.io/github/v/release/jvcorredor/bytheway?label=release)](https://github.com/jvcorredor/bytheway/releases)
+[![Docs](https://img.shields.io/badge/docs-jvcorredor.github.io%2Fbytheway-blue)](https://jvcorredor.github.io/bytheway/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and turn them into entrypoints for agentic work in Claude Code.
@@ -13,17 +13,17 @@ A Go CLI to capture and investigate fast inbounds — Slack threads, hallway ask
 ### From script
 
 ```
-curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 ```
 
 ### From source
 
 ```
-go install github.com/jvcorredor/worktask@latest
+go install github.com/jvcorredor/bytheway@latest
 ```
 
-The binary lands in `$HOME/.local/bin` (or `$GOBIN` for `go install`) as `worktask`. See the [install reference](https://jvcorredor.github.io/worktask/install/) for env-var overrides and `$PATH` setup.
+The binary lands in `$HOME/.local/bin` (or `$GOBIN` for `go install`) as `btw`. See the [install reference](https://jvcorredor.github.io/bytheway/install/) for env-var overrides and `$PATH` setup.
 
 ## Documentation
 
-Full docs: <https://jvcorredor.github.io/worktask/>. The docs site is the canonical reference for subcommands, flags, JSON schema, file format, config keys, and agentic-usage patterns.
+Full docs: <https://jvcorredor.github.io/bytheway/>. The docs site is the canonical reference for subcommands, flags, JSON schema, file format, config keys, and agentic-usage patterns.

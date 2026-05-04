@@ -1443,6 +1443,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bytheway-docs@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "bytheway-docs@workspace:."
+  dependencies:
+    "@astrojs/starlight": "npm:^0.38.4"
+    astro: "npm:^6.2.1"
+  languageName: unknown
+  linkType: soft
+
 "ccount@npm:^2.0.0":
   version: 2.0.1
   resolution: "ccount@npm:2.0.1"
@@ -4732,15 +4741,6 @@ __metadata:
   checksum: 10c0/7e710e54ea36d2d6183bee2f9caa27a3b47b9baf8dee55a199b736fcf85eab3b9df7556fca3d02b50af7f3dfba5ea3a45644189836df06267df457e354da66d5
   languageName: node
   linkType: hard
-
-"worktask-docs@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "worktask-docs@workspace:."
-  dependencies:
-    "@astrojs/starlight": "npm:^0.38.4"
-    astro: "npm:^6.2.1"
-  languageName: unknown
-  linkType: soft
 
 "xxhash-wasm@npm:^1.1.0":
   version: 1.1.0

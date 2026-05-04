@@ -9,7 +9,7 @@
 // preserved verbatim. The user-visible specification of this format,
 // including which fields are stable and how they interact with the CLI,
 // lives on the docs site at
-// <https://jvcorredor.github.io/worktask/storage/>; this package
+// <https://jvcorredor.github.io/bytheway/storage/>; this package
 // implements that contract and does not duplicate it.
 //
 // [Encode] and [Decode] are the only entry points; the rest of the codec
@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/tag"
+	"github.com/jvcorredor/bytheway/internal/tag"
 )
 
 // Task is the in-memory representation of one task file. The zero value

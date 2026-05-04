@@ -20,13 +20,13 @@ import (
 	"sync"
 	"time"
 
-	researchlog "github.com/jvcorredor/worktask/internal/research/log"
-	"github.com/jvcorredor/worktask/internal/research/pool"
-	"github.com/jvcorredor/worktask/internal/research/prompt"
-	"github.com/jvcorredor/worktask/internal/research/runner"
-	"github.com/jvcorredor/worktask/internal/research/writeback"
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
+	researchlog "github.com/jvcorredor/bytheway/internal/research/log"
+	"github.com/jvcorredor/bytheway/internal/research/pool"
+	"github.com/jvcorredor/bytheway/internal/research/prompt"
+	"github.com/jvcorredor/bytheway/internal/research/runner"
+	"github.com/jvcorredor/bytheway/internal/research/writeback"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // RunFunc is the runner-shaped seam the [Coordinator] depends on.
@@ -49,7 +49,7 @@ func DefaultRun(ctx context.Context, in runner.RunInput) (runner.Result, error) 
 // ExtraTools have already absorbed flag overrides, and the prompt
 // template is loaded from disk and passed to [New] separately.
 type Config struct {
-	// TasksDir is the absolute path to the worktask tasks directory.
+	// TasksDir is the absolute path to the btw tasks directory.
 	// Used by [researchlog.Path] to build per-task log filenames.
 	TasksDir string
 	// WorkingLogPath is the absolute path of the worklog file the

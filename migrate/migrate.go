@@ -1,4 +1,4 @@
-// Command worktask-migrate is the one-shot migration tool that promotes
+// Command btw-migrate is the one-shot migration tool that promotes
 // the legacy WORKING.md working log into the per-task file layout under
 // the configured tasks directory. The transformation contract is
 // documented on [Run].
@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/config"
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/config"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 const tsLayout = "2006-01-02 15:04"
@@ -123,7 +123,7 @@ func parseTaskLine(line string) (task.Task, string, bool) {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: worktask-migrate <WORKING.md>")
+		fmt.Fprintln(os.Stderr, "usage: btw-migrate <WORKING.md>")
 		os.Exit(2)
 	}
 	cfg, err := config.Load()

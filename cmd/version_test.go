@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	intversion "github.com/jvcorredor/worktask/internal/version"
+	intversion "github.com/jvcorredor/bytheway/internal/version"
 )
 
 // setVersionForTest seeds the internal/version package's ldflags landing
@@ -49,7 +49,7 @@ func runVersionCmd(t *testing.T, fmtFlag string) (stdout, stderr bytes.Buffer) {
 
 // TestRootCmdVersionFlag is the cobra wiring test: after the cmd package
 // init runs, rootCmd.Version must be populated from version.Get(), so
-// `worktask --version` and `worktask -v` print a meaningful line via
+// `btw --version` and `btw -v` print a meaningful line via
 // cobra's built-in version flag handling.
 func TestRootCmdVersionFlag(t *testing.T) {
 	setVersionForTest(t, "v9.9.9", "abc1234", "2026-05-03T12:00:00Z")

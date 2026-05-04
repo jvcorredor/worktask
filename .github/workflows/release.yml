@@ -67,9 +67,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install worktask via published install script
+      - name: Install btw via published install script
         run: |
-          curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+          curl -fsSL https://jvcorredor.github.io/btw/install.sh | sh
           printf '%s/.local/bin\n' "$HOME" >>"$GITHUB_PATH"
 
       - name: Assert installed binary reports the released version

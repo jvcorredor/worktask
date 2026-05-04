@@ -3,10 +3,10 @@ package cmd
 import (
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
-// skipFlags is the subset of `worktask research` flags that decide which
+// skipFlags is the subset of `btw research` flags that decide which
 // tasks make it into the batch.
 type skipFlags struct {
 	all   bool

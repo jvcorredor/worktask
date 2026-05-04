@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/render"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/render"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // writeTaskFile encodes tk and writes it under openDir; tests rely on
@@ -28,7 +28,7 @@ func writeTaskFile(t *testing.T, openDir string, tk task.Task) {
 }
 
 // TestShowCmd_humanPipeModePassesRawBytes is the end-to-end pipe-mode test:
-// when stdout is a non-TTY writer (here, *bytes.Buffer), `worktask show
+// when stdout is a non-TTY writer (here, *bytes.Buffer), `btw show
 // <frag>` must emit the raw markdown file (frontmatter included) byte-for-byte
 // — the contract callers rely on for piping into editors and other tooling.
 func TestShowCmd_humanPipeModePassesRawBytes(t *testing.T) {
@@ -190,7 +190,7 @@ func TestShowCmd_humanNoMatchPipeModeIsPlain(t *testing.T) {
 	}
 }
 
-// TestShowCmd_jsonIncludesAbsolutePath asserts that `worktask show --format=json`
+// TestShowCmd_jsonIncludesAbsolutePath asserts that `btw show --format=json`
 // emits a top-level `path` field whose value is the absolute filesystem path
 // of the resolved task file. The test seeds an open-task file on disk, runs
 // `show <id> --format=json`, and parses the stdout JSON to compare `path`

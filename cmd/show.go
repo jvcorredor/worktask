@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jvcorredor/worktask/internal/render"
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/tty"
+	"github.com/jvcorredor/bytheway/internal/render"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/tty"
 )
 
 var showCmd = &cobra.Command{

@@ -1,7 +1,7 @@
 #!/bin/sh
-# worktask installer — POSIX, no bashisms.
+# btw installer — POSIX, no bashisms.
 #
-# Usage:  curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+# Usage:  curl -fsSL https://jvcorredor.github.io/btw/install.sh | sh
 #
 # Env vars:
 #   INSTALL_DIR   destination directory (default: $HOME/.local/bin)
@@ -9,7 +9,7 @@
 
 set -eu
 
-REPO='jvcorredor/worktask'
+REPO='jvcorredor/bytheway'
 RELEASES_BASE="https://github.com/${REPO}/releases/download"
 LATEST_API="https://api.github.com/repos/${REPO}/releases/latest"
 
@@ -80,14 +80,14 @@ main() {
     version=$(resolve_version)
     platform=$(detect_platform)
     tag="v${version}"
-    tarball="worktask_${version}_${platform}.tar.gz"
+    tarball="bytheway_${version}_${platform}.tar.gz"
     tarball_url="${RELEASES_BASE}/${tag}/${tarball}"
     checksums_url="${RELEASES_BASE}/${tag}/checksums.txt"
 
-    install_path="$INSTALL_DIR/worktask"
+    install_path="$INSTALL_DIR/btw"
     existing=$(installed_version "$install_path")
 
-    workdir=$(mktemp -d "${TMPDIR:-/tmp}/worktask-install.XXXXXX")
+    workdir=$(mktemp -d "${TMPDIR:-/tmp}/btw-install.XXXXXX")
     trap 'rm -rf "$workdir"' EXIT
 
     printf 'Downloading %s\n' "$tarball"
@@ -101,17 +101,17 @@ main() {
     actual=$(sha256_hash "$workdir/$tarball")
     [ "$expected" = "$actual" ] || die "checksum mismatch for $tarball: expected $expected, got $actual"
 
-    tar -xzf "$workdir/$tarball" -C "$workdir" worktask \
-        || die "failed to extract worktask from $tarball"
+    tar -xzf "$workdir/$tarball" -C "$workdir" btw \
+        || die "failed to extract btw from $tarball"
 
     mkdir -p "$INSTALL_DIR"
     if [ -n "$existing" ] && [ "$existing" != "$version" ]; then
-        printf 'Upgrading worktask from %s to %s\n' "$existing" "$version"
+        printf 'Upgrading btw from %s to %s\n' "$existing" "$version"
     fi
-    mv "$workdir/worktask" "$install_path"
+    mv "$workdir/btw" "$install_path"
     chmod +x "$install_path"
 
-    printf 'Installed worktask %s to %s\n' "$version" "$install_path"
+    printf 'Installed btw %s to %s\n' "$version" "$install_path"
 
     print_path_hint_if_needed
 }

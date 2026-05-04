@@ -1,4 +1,4 @@
-// Package cmd assembles the worktask cobra command tree.
+// Package cmd assembles the btw cobra command tree.
 //
 // The root command lives in this file as rootCmd; each subcommand —
 // add, list, show, close, reopen, edit, update, append, research —
@@ -23,8 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jvcorredor/worktask/internal/config"
-	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/bytheway/internal/config"
+	"github.com/jvcorredor/bytheway/internal/store"
 )
 
 const (
@@ -35,7 +35,7 @@ const (
 var format string
 
 var rootCmd = &cobra.Command{
-	Use:           "worktask",
+	Use:           "btw",
 	Short:         "Markdown-backed task CLI",
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -47,7 +47,7 @@ func init() {
 
 var errExit = errors.New("exit")
 
-// Execute runs the worktask CLI: it dispatches the root cobra command,
+// Execute runs the btw CLI: it dispatches the root cobra command,
 // prints any error to stderr (suppressing the sentinel used to short-
 // circuit a subcommand without an extra error line), and exits the
 // process with status 1 on failure. It is the only entry point main.go

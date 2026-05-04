@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/research/runner"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/research/runner"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // Item is one unit of pool work. All fields are populated by the caller

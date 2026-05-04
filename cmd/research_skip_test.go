@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 func TestPartitionResearchCandidates(t *testing.T) {

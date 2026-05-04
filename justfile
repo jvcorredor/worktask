@@ -2,9 +2,9 @@
 default:
     @just --list
 
-# Compile the worktask CLI to ./bin/worktask
+# Compile the btw CLI to ./bin/btw
 build:
-    go build -o ./bin/worktask .
+    go build -o ./bin/btw .
 
 # Run the Go test suite
 test:
@@ -14,7 +14,7 @@ test:
 test-install:
     sh tests/install/run.sh
 
-# Run the post-release smoke-test assertion script's harness (POSIX shell, mocked worktask)
+# Run the post-release smoke-test assertion script's harness (POSIX shell, mocked btw)
 test-smoke-version:
     sh tests/smoke-test-version/run.sh
 
@@ -44,7 +44,7 @@ docs-build:
 
 # Placeholder for the lint gate; wired up in #10
 lint:
-    @echo "lint is not yet implemented; see https://github.com/jvcorredor/worktask/issues/10" >&2; exit 1
+    @echo "lint is not yet implemented; see https://github.com/jvcorredor/bytheway/issues/10" >&2; exit 1
 
 # Run the full local CI gate (fmt-check, vet, test, test-install, test-smoke-version) in workflow order
 ci: fmt-check vet test test-install test-smoke-version

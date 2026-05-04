@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/research/runner"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/research/runner"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // TestResearchCmd_batchForwardsCoordinatorOutputsIntoRender verifies the

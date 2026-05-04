@@ -1,9 +1,9 @@
 ---
 title: Design notes
-description: Why worktask is shaped the way it is — out-of-scope items, internal package layout, and the migration tool.
+description: Why bytheway is shaped the way it is — out-of-scope items, internal package layout, and the migration tool.
 ---
 
-`worktask` is shaped around two readers: an LLM agent calling a thin slash command, and a human at a terminal. The agent gets stable JSON output with an explicit `error` discriminator so it can branch without parsing prose. The human gets one task per markdown file so `cat`, `grep`, `rg`, and `vim` work directly against the data directory without going through the binary. Most decisions below fall out of one of those two readers.
+`btw` is shaped around two readers: an LLM agent calling a thin slash command, and a human at a terminal. The agent gets stable JSON output with an explicit `error` discriminator so it can branch without parsing prose. The human gets one task per markdown file so `cat`, `grep`, `rg`, and `vim` work directly against the data directory without going through the binary. Most decisions below fall out of one of those two readers.
 
 ## Out of scope
 

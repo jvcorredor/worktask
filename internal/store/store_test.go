@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 func TestAdd_writesFileToOpenDir(t *testing.T) {

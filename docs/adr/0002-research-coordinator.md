@@ -23,7 +23,7 @@ path. The closure that bridges pool and runner reaches into the sidecar
 on every dispatch. The construct is a workaround caused by orchestration
 state living in `cmd/`, above the layer that should own it.
 
-Tracking issue [#85](https://github.com/jvcorredor/worktask/issues/85)
+Tracking issue [#85](https://github.com/jvcorredor/bytheway/issues/85)
 asked for a research spike: investigate whether a `ResearchCoordinator`
 module — with injected dependencies and a clean test surface — can
 absorb the duplication and dissolve `itemMeta`.
@@ -203,7 +203,7 @@ intentional change in Consequences.
   The current batch path silently swallows them; the new path turns
   them into `failed` results so a "research run reported success but
   the task body wasn't updated" silently doesn't happen. Single-task
-  callers (`worktask research <fragment>`) see the writeback error
+  callers (`btw research <fragment>`) see the writeback error
   reflected in the JSON line's `error` field.
 - **Behavior change: per-task render failures no longer abort the
   batch.** A malformed body that breaks the template for one task no
@@ -216,8 +216,8 @@ intentional change in Consequences.
 
 ## References
 
-- Spike issue: [#85](https://github.com/jvcorredor/worktask/issues/85)
-- Prototype branch: `worktask-85-research-coordinator-spike` —
+- Spike issue: [#85](https://github.com/jvcorredor/bytheway/issues/85)
+- Prototype branch: `bytheway-85-research-coordinator-spike` —
   contains the Coordinator package and three indicative tests
   (`TestRunOne_findings_appliesWriteback`,
   `TestRunOne_failed_skipsWriteback`,

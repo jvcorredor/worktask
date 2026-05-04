@@ -1,22 +1,22 @@
 ---
 title: Agentic recipes
-description: The capture / soak / investigate / hand off funnel as recipes against existing worktask primitives.
+description: The capture / soak / investigate / hand off funnel as recipes against existing bytheway primitives.
 ---
 
-`worktask` is built around a four-stage funnel: **capture** a fast inbound, **soak** it as more context arrives, **investigate** once the seed material is dense enough, and **hand off** the investigated brief to a downstream skill that shapes it.
+`btw` is built around a four-stage funnel: **capture** a fast inbound, **soak** it as more context arrives, **investigate** once the seed material is dense enough, and **hand off** the investigated brief to a downstream skill that shapes it.
 
 The CLI exposes user-triggered primitives for capture and investigation. It does not chain stages together — every stage fires when you (or the calling agent) say so. There is no `capture` composite verb, no `add --research` flag, and no shipped wrapper skill. The recipes below show the canonical end-to-end pattern using only the primitives the binary already exposes.
 
 ## Role boundary
 
-Worktask owns **capture** and **investigation**. Shaping the investigated brief into a plan, a PRD, an issue, or a draft message — and delivering it to wherever it needs to go — are downstream responsibilities. Skills like `/grill-me` and `/grill-with-docs` are typical handoff targets; worktask's job ends when it has written investigated starting points back into the task body.
+Bytheway owns **capture** and **investigation**. Shaping the investigated brief into a plan, a PRD, an issue, or a draft message — and delivering it to wherever it needs to go — are downstream responsibilities. Skills like `/grill-me` and `/grill-with-docs` are typical handoff targets; bytheway's job ends when it has written investigated starting points back into the task body.
 
 ## 1. Capture
 
 Catch the inbound before it disappears. One line of intent is enough — slug, ID, and timestamp are generated for you.
 
 ```
-$ worktask add "slack thread from leadership about renewal churn"
+$ btw add "slack thread from leadership about renewal churn"
 added 1e3900e4
 ```
 
@@ -31,25 +31,25 @@ Soak is the gap between capture and investigation. As more context trickles in �
 Append free-form context with [`append`](./cli.md#append):
 
 ```
-$ worktask append 1e3900e4 "ARR impact called out in Q1 board deck — see drive link in #renewal-ops"
-$ worktask append 1e3900e4 "engineering counterpoint: cohort 2024-Q3 was a one-off, not a trend"
+$ bytheway append 1e3900e4 "ARR impact called out in Q1 board deck — see drive link in #renewal-ops"
+$ bytheway append 1e3900e4 "engineering counterpoint: cohort 2024-Q3 was a one-off, not a trend"
 ```
 
 Replace the canonical description with [`update`](./cli.md#update) when the framing of the task itself shifts:
 
 ```
-$ worktask update 1e3900e4 "renewal churn — cohort 2024-Q3 anomaly vs. trend"
+$ bytheway update 1e3900e4 "renewal churn — cohort 2024-Q3 anomaly vs. trend"
 ```
 
-For larger edits — restructuring the body, pasting a long quote — open the file in your editor with [`edit`](./cli.md#edit). The CLI hands off to `$EDITOR` directly; agents validate the fragment with `show` and then ask the user to run `worktask edit <id>` from their own shell, since `syscall.Exec` is unusable from an agent shell.
+For larger edits — restructuring the body, pasting a long quote — open the file in your editor with [`edit`](./cli.md#edit). The CLI hands off to `$EDITOR` directly; agents validate the fragment with `show` and then ask the user to run `btw edit <id>` from their own shell, since `syscall.Exec` is unusable from an agent shell.
 
 Tagging is optional and belongs to soak. Tags are triage labels, not generic categorization — use them when you want to group captures for a later batch sweep:
 
 ```
-$ worktask tag add 1e3900e4 renewal
+$ btw tag add 1e3900e4 renewal
 ```
 
-You can later scope investigation to that triage bucket with `worktask research --tag renewal` (see below).
+You can later scope investigation to that triage bucket with `btw research --tag renewal` (see below).
 
 ### When *not* to fire research yet
 
@@ -68,22 +68,22 @@ Once the seed is dense enough, fire [`research`](./cli.md#research). The CLI spa
 Single task:
 
 ```
-$ worktask research 1e3900e4
+$ btw research 1e3900e4
 ```
 
 Batch every open task that has not been researched yet:
 
 ```
-$ worktask research
+$ btw research
 ```
 
 Sweep just the soak-triage bucket you tagged earlier:
 
 ```
-$ worktask research --tag renewal
+$ btw research --tag renewal
 ```
 
-Research runs are unattended and can take minutes per task. From a slash command, dispatch via a background bash and return an immediate ack to the user; the harness notifies the agent when the run lands. The vendored [reference slash command](./examples/worktask-slash-command.md) shows the full pattern.
+Research runs are unattended and can take minutes per task. From a slash command, dispatch via a background bash and return an immediate ack to the user; the harness notifies the agent when the run lands. The vendored [reference slash command](./examples/bytheway-slash-command.md) shows the full pattern.
 
 ## 4. Hand off
 
@@ -95,17 +95,17 @@ After investigation, the task body carries the agent's findings, and the YAML fr
 A handoff recipe pulls the body and the log path out of `show` and feeds them to the downstream skill:
 
 ```
-$ worktask --format=json show 1e3900e4 | jq -r .body
-$ worktask --format=json show 1e3900e4 | jq -r .last_research_log
-$ worktask --format=json show 1e3900e4 | jq -r .last_researched
+$ btw --format=json show 1e3900e4 | jq -r .body
+$ btw --format=json show 1e3900e4 | jq -r .last_research_log
+$ btw --format=json show 1e3900e4 | jq -r .last_researched
 ```
 
-A downstream slash command — `/grill-me`, `/grill-with-docs`, or any project-local equivalent — reads those fields, optionally `cat`s the log, and turns the investigated material into a plan, a PRD, an issue, or a draft message. That shaping step is outside worktask's scope by design.
+A downstream slash command — `/grill-me`, `/grill-with-docs`, or any project-local equivalent — reads those fields, optionally `cat`s the log, and turns the investigated material into a plan, a PRD, an issue, or a draft message. That shaping step is outside bytheway's scope by design.
 
 Branching on whether a task has been investigated is a one-liner against the same JSON:
 
 ```
-$ worktask --format=json show 1e3900e4 | jq -e 'has("last_researched")'
+$ btw --format=json show 1e3900e4 | jq -e 'has("last_researched")'
 ```
 
 Returns 0 if the task has been researched, non-zero otherwise — useful for a wrapper that wants to soak-or-handoff dispatch without a second CLI call.
@@ -113,5 +113,5 @@ Returns 0 if the task has been researched, non-zero otherwise — useful for a w
 ## Where to go next
 
 - [Agentic usage](./agentic.md) — JSON schema, error envelopes, and the slash-command dispatch pattern.
-- [Reference slash command](./examples/worktask-slash-command.md) — the vendored Claude Code slash command, end-to-end.
+- [Reference slash command](./examples/bytheway-slash-command.md) — the vendored Claude Code slash command, end-to-end.
 - [CLI reference](./cli.md) — every primitive cited above, with flags and examples.

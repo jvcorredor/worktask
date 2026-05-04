@@ -1,5 +1,5 @@
 // Package log computes filesystem paths for research run log files
-// under the worktask tasks directory.
+// under the btw tasks directory.
 package log
 
 import (

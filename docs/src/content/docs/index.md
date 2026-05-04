@@ -3,7 +3,7 @@ title: Capture and investigate fast inbounds
 description: A Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and hand them off as entrypoints for agentic work in Claude Code.
 ---
 
-Worktask is a Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and turn them into entrypoints for agentic work in Claude Code. The funnel runs capture → soak → investigate → hand off; worktask owns capture and investigation, while shaping and handoff are left to downstream agents.
+Bytheway is a Go CLI to capture and investigate fast inbounds — Slack threads, hallway asks, leadership questions — and turn them into entrypoints for agentic work in Claude Code. The funnel runs capture → soak → investigate → hand off; bytheway owns capture and investigation, while shaping and handoff are left to downstream agents.
 
 The CLI is the agent-first surface: match resolution, ID generation, slug generation, and formatting all live in the binary so the agent never has to read or rewrite task files itself. Tasks are plain markdown — `cat`, `grep`, `rg`, and `vim` work directly against the data directory without going through the binary.
 
@@ -12,18 +12,18 @@ The CLI is the agent-first surface: match resolution, ID generation, slug genera
 Pre-built binary (no Go toolchain required):
 
 ```
-curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 ```
 
-Installs the latest release to `$HOME/.local/bin/worktask`. Override the destination with `INSTALL_DIR=/usr/local/bin` or pin the release with `VERSION=0.2.0`. Full reference and verification details live on the [Install](./install.md) page.
+Installs the latest release to `$HOME/.local/bin/bytheway`. Override the destination with `INSTALL_DIR=/usr/local/bin` or pin the release with `VERSION=0.2.0`. Full reference and verification details live on the [Install](./install.md) page.
 
 From source (requires Go):
 
 ```
-go install github.com/jvcorredor/worktask@latest
+go install github.com/jvcorredor/bytheway@latest
 ```
 
-The binary lands in `$GOBIN` as `worktask`. Alias to `wt` if you want a shorter handle.
+The binary lands in `$GOBIN` as `btw`. Alias to `wt` if you want a shorter handle.
 
 ## Where to go next
 

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/bytheway/internal/store"
 )
 
-// TestZGenerateGoldenFiles is a one-shot helper enabled with WORKTASK_GOLDEN=1
+// TestZGenerateGoldenFiles is a one-shot helper enabled with BTW_GOLDEN=1
 // to (re)generate golden testdata files for new render shapes.
 func TestZGenerateGoldenFiles(t *testing.T) {
-	if os.Getenv("WORKTASK_GOLDEN") != "1" {
-		t.Skip("set WORKTASK_GOLDEN=1 to regenerate golden files")
+	if os.Getenv("BTW_GOLDEN") != "1" {
+		t.Skip("set BTW_GOLDEN=1 to regenerate golden files")
 	}
 	emit := func(name string, fn func() ([]byte, error)) {
 		t.Helper()

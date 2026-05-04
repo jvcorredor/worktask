@@ -11,7 +11,7 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 //go:embed prompt.md

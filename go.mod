@@ -1,4 +1,4 @@
-module github.com/jvcorredor/worktask
+module github.com/jvcorredor/bytheway
 
 go 1.26.2
 

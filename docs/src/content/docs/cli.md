@@ -1,34 +1,34 @@
 ---
 title: CLI reference
-description: Subcommand reference for the worktask CLI — flags, examples, and match-resolution behavior.
+description: Subcommand reference for the bytheway CLI — flags, examples, and match-resolution behavior.
 ---
 
-Every subcommand `worktask` exposes is documented on this page. For the on-disk shape of task files, see [File & storage format](./storage.md). For JSON output and error envelopes, see [Agentic usage](./agentic.md).
+Every subcommand `btw` exposes is documented on this page. For the on-disk shape of task files, see [File & storage format](./storage.md). For JSON output and error envelopes, see [Agentic usage](./agentic.md).
 
 ## Global flags
 
 `--format=human|json` (default `human`).
 
-JSON output is intended for agentic consumers; the schema is documented as stable. Human output is the default and is what you see when running `worktask` directly in a terminal.
+JSON output is intended for agentic consumers; the schema is documented as stable. Human output is the default and is what you see when running `btw` directly in a terminal.
 
 `--version` (alias `-v`) prints the binary's version on a single line and exits — see the [`version`](#version) subcommand below for the underlying resolution rules.
 
 ## Subcommands at a glance
 
 ```
-worktask add <description>
-worktask list [--all] [--closed] [--limit N] [--tag TAG]
-worktask show <fragment>
-worktask update <fragment> <new description>
-worktask append <fragment> <text>
-worktask close <fragment>
-worktask reopen <fragment>
-worktask edit <fragment>
-worktask tag add <fragment> <tag>
-worktask tag rm <fragment> <tag>
-worktask tag ls [--all] [--closed]
-worktask research [<fragment>]
-worktask version
+btw add <description>
+btw list [--all] [--closed] [--limit N] [--tag TAG]
+btw show <fragment>
+bytheway update <fragment> <new description>
+bytheway append <fragment> <text>
+btw close <fragment>
+bytheway reopen <fragment>
+btw edit <fragment>
+btw tag add <fragment> <tag>
+btw tag rm <fragment> <tag>
+btw tag ls [--all] [--closed]
+btw research [<fragment>]
+btw version
 ```
 
 `<fragment>` is anything that resolves to a single task. See [Match resolution](#match-resolution) below.
@@ -40,7 +40,7 @@ There is no `delete` subcommand by design. Removing a task means `rm` against th
 Creates a new task in `open/`, prints `added <id>`.
 
 ```
-$ worktask add buy milk
+$ btw add buy milk
 added abcdef12
 ```
 
@@ -58,11 +58,11 @@ Flags:
 - `--tag TAG` filters to tasks carrying the tag (single value, exact match after lowercase normalization). Composes as logical AND with `--all`/`--closed`. A non-matching tag returns an empty list with no error; an invalid tag value (whitespace, uppercase that doesn't normalize cleanly, characters outside `[a-z0-9-]`) is rejected.
 
 ```
-$ worktask list
-$ worktask list --all
-$ worktask list --closed --limit 50
-$ worktask list --tag bug
-$ worktask list --tag infra --all
+$ btw list
+$ btw list --all
+$ btw list --closed --limit 50
+$ btw list --tag bug
+$ btw list --tag infra --all
 ```
 
 In `--format=human`, the rendering is TTY-aware:
@@ -84,20 +84,20 @@ In `--format=human`, the rendering is TTY-aware:
 In `--format=json`, it prints a JSON object with `id`, `created`, `description`, `body`, `path`, and (if closed) `completed`. When the task has been researched, the object also carries `last_researched` (RFC 3339 UTC) and `last_research_log` (absolute path to the latest run's JSONL log); both are omitted when un-researched. `path` is the absolute, cleaned filesystem path of the task file; symlinks in the configured tasks directory are preserved verbatim. JSON output is unchanged by TTY detection.
 
 ```
-$ worktask show milk
-$ worktask --format=json show abcdef12
-$ worktask --format=json show abcdef12 | jq -r .path               # the file on disk
-$ worktask --format=json show abcdef12 | jq -r .last_research_log  # latest research log
+$ btw show milk
+$ btw --format=json show abcdef12
+$ btw --format=json show abcdef12 | jq -r .path               # the file on disk
+$ btw --format=json show abcdef12 | jq -r .last_research_log  # latest research log
 ```
 
-Older releases shipped a dedicated `worktask research-log <fragment>` subcommand that printed only the latest research-log path; it has been removed in favour of the `show --format=json | jq -r .last_research_log` form above. Existing scripts that called `worktask research-log` should switch to that pipeline.
+Older releases shipped a dedicated `btw research-log <fragment>` subcommand that printed only the latest research-log path; it has been removed in favour of the `show --format=json | jq -r .last_research_log` form above. Existing scripts that called `btw research-log` should switch to that pipeline.
 
 ## `update`
 
 Replaces the first body line — the canonical description — without touching frontmatter, ID, slug, or filename.
 
 ```
-$ worktask update milk buy oat milk instead
+$ bytheway update milk buy oat milk instead
 ```
 
 ## `append`
@@ -105,7 +105,7 @@ $ worktask update milk buy oat milk instead
 Adds text to the body of a task, preserving everything above it.
 
 ```
-$ worktask append milk remember the brand
+$ bytheway append milk remember the brand
 ```
 
 ## `close`
@@ -113,7 +113,7 @@ $ worktask append milk remember the brand
 Moves the file from `open/` to `closed/` via `os.Rename` and stamps `completed:` into the frontmatter.
 
 ```
-$ worktask close milk
+$ btw close milk
 ```
 
 ## `reopen`
@@ -121,7 +121,7 @@ $ worktask close milk
 The inverse of `close`: moves the file back to `open/` and clears the `completed:` field.
 
 ```
-$ worktask reopen milk
+$ bytheway reopen milk
 ```
 
 ## `tag add`
@@ -129,7 +129,7 @@ $ worktask reopen milk
 Adds a tag to an existing task. The tag is normalized (lower-cased, trimmed) and validated against `[a-z0-9-]` up to 40 characters. Re-running with the same tag is a no-op.
 
 ```
-$ worktask tag add milk urgent
+$ btw tag add milk urgent
 tagged abcdef12 with urgent
 ```
 
@@ -138,7 +138,7 @@ tagged abcdef12 with urgent
 Removes a tag from an existing task. Re-running with an absent tag is a no-op. When the last tag is removed, the `tags:` frontmatter line is omitted entirely.
 
 ```
-$ worktask tag rm milk urgent
+$ btw tag rm milk urgent
 removed urgent from abcdef12
 ```
 
@@ -156,14 +156,14 @@ Default is open tasks only — same semantics as [`list`](#list).
 In `--format=human`, output is a single space-padded line of `name (count)` entries, no header, no ANSI escapes. An empty corpus emits a blank line.
 
 ```
-$ worktask tag ls
+$ btw tag ls
 bug (3)  infra (5)  urgent (2)
 ```
 
 In `--format=json`, output is `{"tags": [{"name": ..., "count": ...}, ...]}`. The `tags` key is always present (empty array when none) so consumers can `jq '.tags'` without null-checking.
 
 ```
-$ worktask --format=json tag ls
+$ btw --format=json tag ls
 {
   "tags": [
     {"name": "bug",    "count": 3},
@@ -178,18 +178,18 @@ $ worktask --format=json tag ls
 `syscall.Exec`s `$EDITOR` (or the configured override, falling back to `vi`) on the resolved task path. See [Configuration](./config.md) for editor resolution.
 
 ```
-$ worktask edit milk
+$ btw edit milk
 ```
 
-This command is not usable from an agent shell because it replaces the calling process with the editor. The reference slash command instructs the user to run `worktask edit <id>` from their own shell instead.
+This command is not usable from an agent shell because it replaces the calling process with the editor. The reference slash command instructs the user to run `btw edit <id>` from their own shell instead.
 
 ## `research`
 
 Spawns a headless Claude Code agent to gather context for one task or sweep every open task. The agent runs unattended with `--permission-mode=bypassPermissions`; the security boundary is the `--allowed-tools` list passed to it.
 
 ```
-$ worktask research milk        # research a single task
-$ worktask research              # batch-research every open task
+$ btw research milk        # research a single task
+$ btw research              # batch-research every open task
 ```
 
 Flags:
@@ -205,7 +205,7 @@ The shipped binary's `--allowed-tools` baseline contains five built-in read-only
 
 ### Batch outcome reporting
 
-In a batch run (`worktask research` or `worktask research --all`), every task makes it into the final summary, even when prep- or post-run plumbing fails. Two cases that previously fell through the cracks now surface as `failed` outcomes:
+In a batch run (`btw research` or `btw research --all`), every task makes it into the final summary, even when prep- or post-run plumbing fails. Two cases that previously fell through the cracks now surface as `failed` outcomes:
 
 - **Writeback errors** (the agent succeeded but the cmd could not append the Research section, set the `last_researched` frontmatter, or append the worklog line — for example, the task file went missing mid-run, or the worklog directory is unwritable) emit a `task_failed` event and a `failed` row in the summary. The agent's original summary text is preserved in the row's `summary` field; the writeback error message goes into `error`. Previously these were silently reported as if the writeback had succeeded.
 - **Per-task `prompt.Render` failures during prep** (a malformed override template, or a task whose frontmatter does not satisfy a custom template's field references) emit a synthetic `task_failed` event for that task and a `failed` row in the summary. Other tasks in the batch still run. Previously a single render failure aborted the whole sweep before any task ran.
@@ -216,13 +216,13 @@ JSON output is documented in [Agentic usage](./agentic.md).
 
 ## `version`
 
-Prints the binary's build identity. The same identity is what `worktask --version` and `worktask -v` report on a single line via cobra's built-in version flag.
+Prints the binary's build identity. The same identity is what `btw --version` and `btw -v` report on a single line via cobra's built-in version flag.
 
 ```
-$ worktask version
-worktask v1.2.3 (commit abcdef1, built 2026-05-03T10:00:00Z)
+$ btw version
+bytheway v1.2.3 (commit abcdef1, built 2026-05-03T10:00:00Z)
 
-$ worktask --format=json version
+$ btw --format=json version
 {
   "version": "v1.2.3",
   "commit": "abcdef1",
@@ -235,7 +235,7 @@ The JSON schema is `{"version": string, "commit": string, "date": string, "sourc
 
 ## Match resolution
 
-For commands that take `<fragment>`, `worktask` tries strategies in order and stops at the first one that yields any matches:
+For commands that take `<fragment>`, `btw` tries strategies in order and stops at the first one that yields any matches:
 
 1. ID exact
 2. ID prefix
