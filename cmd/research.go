@@ -39,9 +39,10 @@ const (
 var researchRunFunc research.RunFunc = research.DefaultRun
 
 var researchCmd = &cobra.Command{
-	Use:   "research [<fragment>]",
-	Short: "Research one task or sweep every open task via headless claude agents",
-	Args:  cobra.MaximumNArgs(1),
+	Use:               "research [<fragment>]",
+	Short:             "Research one task or sweep every open task via headless claude agents",
+	Args:              cobra.MaximumNArgs(1),
+	ValidArgsFunction: completeFragment(store.FilterOpen),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 1 && cmd.Flags().Changed("tag") {
 			return fmt.Errorf("--tag is not valid in single-task mode (drop the fragment to sweep all tagged tasks)")

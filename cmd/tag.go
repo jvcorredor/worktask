@@ -58,9 +58,10 @@ var tagLsCmd = &cobra.Command{
 }
 
 var tagAddCmd = &cobra.Command{
-	Use:   "add <fragment> <tag>",
-	Short: "Add a tag to an existing task",
-	Args:  cobra.ExactArgs(2),
+	Use:               "add <fragment> <tag>",
+	Short:             "Add a tag to an existing task",
+	Args:              cobra.ExactArgs(2),
+	ValidArgsFunction: completeFragment(store.FilterAll),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fragment, rawTag := args[0], args[1]
 		s, err := newStore()
@@ -77,9 +78,10 @@ var tagAddCmd = &cobra.Command{
 }
 
 var tagRmCmd = &cobra.Command{
-	Use:   "rm <fragment> <tag>",
-	Short: "Remove a tag from an existing task",
-	Args:  cobra.ExactArgs(2),
+	Use:               "rm <fragment> <tag>",
+	Short:             "Remove a tag from an existing task",
+	Args:              cobra.ExactArgs(2),
+	ValidArgsFunction: completeFragment(store.FilterAll),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fragment, rawTag := args[0], args[1]
 		s, err := newStore()
