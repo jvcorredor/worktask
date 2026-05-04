@@ -72,8 +72,9 @@ type jsonShowTask struct {
 }
 
 type jsonMatch struct {
-	ID          string `json:"id"`
-	Description string `json:"description"`
+	ID          string   `json:"id"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
 }
 
 type jsonErrAmbiguous struct {
@@ -101,11 +102,18 @@ func JSONErrorNoMatch(fragment string, openTasks []task.Task) ([]byte, error) {
 
 // JSONErrorAmbiguous renders the ambiguous-fragment error envelope: an
 // object with error="ambiguous", the offending fragment, and the
-// candidate tasks the fragment matched.
+// candidate tasks the fragment matched. Each match carries id,
+// description, and tags; tags is always present and serializes as []
+// when the candidate has none, so callers can jq '.matches[].tags'
+// without null-checking.
 func JSONErrorAmbiguous(fragment string, candidates []store.Candidate) ([]byte, error) {
 	matches := make([]jsonMatch, 0, len(candidates))
 	for _, c := range candidates {
-		matches = append(matches, jsonMatch{ID: c.ID, Description: c.Description})
+		tags := c.Tags
+		if tags == nil {
+			tags = []string{}
+		}
+		matches = append(matches, jsonMatch{ID: c.ID, Description: c.Description, Tags: tags})
 	}
 	return marshalIndent(jsonErrAmbiguous{Error: "ambiguous", Fragment: fragment, Matches: matches})
 }

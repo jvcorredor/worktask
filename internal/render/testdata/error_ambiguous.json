@@ -4,11 +4,16 @@
   "matches": [
     {
       "id": "11111111",
-      "description": "buy milk"
+      "description": "buy milk",
+      "tags": [
+        "errand",
+        "shopping"
+      ]
     },
     {
       "id": "22222222",
-      "description": "buy milkshake"
+      "description": "buy milkshake",
+      "tags": []
     }
   ]
 }

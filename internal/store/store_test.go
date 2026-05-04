@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -238,6 +239,38 @@ func TestGet_ambiguousReturnsTypedErrorWithCandidates(t *testing.T) {
 	}
 	if gotIDs["22222222"] != "buy milkshake" {
 		t.Errorf("Candidates[22222222].Description = %q; want %q", gotIDs["22222222"], "buy milkshake")
+	}
+}
+
+func TestGet_ambiguousCandidatesCarryTags(t *testing.T) {
+	dir := t.TempDir()
+	s := New(dir)
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 9, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "11111111" }
+	if _, err := s.Add("buy milk", "errand", "shopping"); err != nil {
+		t.Fatalf("Add A: %v", err)
+	}
+	s.Now = func() time.Time { return time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC) }
+	s.NewID = func() string { return "22222222" }
+	if _, err := s.Add("buy milkshake"); err != nil {
+		t.Fatalf("Add B: %v", err)
+	}
+
+	_, _, _, err := s.Get("milk")
+	var amb *ErrAmbiguous
+	if !errors.As(err, &amb) {
+		t.Fatalf("error type = %T (%v); want *ErrAmbiguous", err, err)
+	}
+	gotTags := map[string][]string{}
+	for _, c := range amb.Candidates {
+		gotTags[c.ID] = c.Tags
+	}
+	wantTagged := []string{"errand", "shopping"}
+	if !reflect.DeepEqual(gotTags["11111111"], wantTagged) {
+		t.Errorf("Candidates[11111111].Tags = %v; want %v", gotTags["11111111"], wantTagged)
+	}
+	if got := gotTags["22222222"]; len(got) != 0 {
+		t.Errorf("Candidates[22222222].Tags = %v; want empty (no tags on source task)", got)
 	}
 }
 

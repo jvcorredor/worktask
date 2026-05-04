@@ -33,7 +33,7 @@ Golden fixtures for the JSON schema live in `internal/render/testdata/` in the r
 When a `<fragment>` resolves ambiguously or not at all, the command exits non-zero. In `--format=json`, both cases produce a stable JSON envelope with an `error` discriminator so agents can branch without parsing prose.
 
 ```json
-{ "error": "ambiguous", "fragment": "milk", "matches": [{ "id": "...", "description": "..." }] }
+{ "error": "ambiguous", "fragment": "milk", "matches": [{ "id": "...", "description": "...", "tags": [] }] }
 ```
 
 ```json

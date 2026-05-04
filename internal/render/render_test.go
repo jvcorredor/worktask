@@ -2,7 +2,9 @@ package render
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -42,7 +44,7 @@ func TestJSONList_matchesSnapshot(t *testing.T) {
 
 func TestJSONErrorAmbiguous_matchesSnapshot(t *testing.T) {
 	candidates := []store.Candidate{
-		{ID: "11111111", Description: "buy milk"},
+		{ID: "11111111", Description: "buy milk", Tags: []string{"errand", "shopping"}},
 		{ID: "22222222", Description: "buy milkshake"},
 	}
 	got, err := JSONErrorAmbiguous("milk", candidates)
@@ -55,6 +57,40 @@ func TestJSONErrorAmbiguous_matchesSnapshot(t *testing.T) {
 	}
 	if string(got) != string(want) {
 		t.Errorf("JSON output does not match snapshot.\n--- got ---\n%s\n--- want ---\n%s", got, want)
+	}
+}
+
+func TestJSONErrorAmbiguous_eachMatchCarriesTags(t *testing.T) {
+	candidates := []store.Candidate{
+		{ID: "11111111", Description: "buy milk", Tags: []string{"errand", "shopping"}},
+		{ID: "22222222", Description: "buy milkshake"},
+	}
+	got, err := JSONErrorAmbiguous("milk", candidates)
+	if err != nil {
+		t.Fatalf("JSONErrorAmbiguous: %v", err)
+	}
+	var parsed struct {
+		Matches []struct {
+			ID   string    `json:"id"`
+			Tags *[]string `json:"tags"`
+		} `json:"matches"`
+	}
+	if err := json.Unmarshal(got, &parsed); err != nil {
+		t.Fatalf("unmarshal: %v\noutput: %s", err, got)
+	}
+	if len(parsed.Matches) != 2 {
+		t.Fatalf("len(matches) = %d; want 2", len(parsed.Matches))
+	}
+	for i, m := range parsed.Matches {
+		if m.Tags == nil {
+			t.Errorf("matches[%d] (id=%s): tags key missing or null; want array (empty when no tags)", i, m.ID)
+		}
+	}
+	if got, want := parsed.Matches[0].Tags, []string{"errand", "shopping"}; got == nil || !reflect.DeepEqual(*got, want) {
+		t.Errorf("matches[0].tags = %v; want %v", got, want)
+	}
+	if got := parsed.Matches[1].Tags; got == nil || len(*got) != 0 {
+		t.Errorf("matches[1].tags = %v; want empty array (nil tags must serialize as [])", got)
 	}
 }
 
