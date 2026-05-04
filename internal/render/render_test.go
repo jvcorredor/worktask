@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 func TestJSONList_matchesSnapshot(t *testing.T) {

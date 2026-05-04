@@ -11,11 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jvcorredor/worktask/internal/config"
-	"github.com/jvcorredor/worktask/internal/render"
-	"github.com/jvcorredor/worktask/internal/research"
-	"github.com/jvcorredor/worktask/internal/research/prompt"
-	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/bytheway/internal/config"
+	"github.com/jvcorredor/bytheway/internal/render"
+	"github.com/jvcorredor/bytheway/internal/research"
+	"github.com/jvcorredor/bytheway/internal/research/prompt"
+	"github.com/jvcorredor/bytheway/internal/store"
 )
 
 var (

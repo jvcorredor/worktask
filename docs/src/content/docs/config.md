@@ -1,9 +1,9 @@
 ---
 title: Configuration
-description: Configuring worktask via tasks_dir, editor, research_model, research_prompt_path, research_extra_tools, XDG paths, and resolution order.
+description: Configuring bytheway via tasks_dir, editor, research_model, research_prompt_path, research_extra_tools, XDG paths, and resolution order.
 ---
 
-`worktask` is configured via a single optional TOML file. There is no `init` step: if the file is absent, `worktask` runs on defaults. If it is present, every key in it is optional.
+`btw` is configured via a single optional TOML file. There is no `init` step: if the file is absent, `btw` runs on defaults. If it is present, every key in it is optional.
 
 ## File path
 
@@ -27,11 +27,11 @@ research_extra_tools = [
 
 ## `tasks_dir`
 
-Where task files live. See the data directory layout in [File & storage format](./storage.md). When unset, `worktask` uses `$XDG_DATA_HOME/worktask/`, falling back to `~/.local/share/worktask/`.
+Where task files live. See the data directory layout in [File & storage format](./storage.md). When unset, `btw` uses `$XDG_DATA_HOME/worktask/`, falling back to `~/.local/share/worktask/`.
 
 ## `editor`
 
-Command used by `worktask edit`. The value is run as a shell-style invocation with the resolved task path appended.
+Command used by `btw edit`. The value is run as a shell-style invocation with the resolved task path appended.
 
 Resolution order:
 
@@ -43,15 +43,15 @@ The first value that is set wins. `vi` is the final fallback.
 
 ## `research_model`
 
-Claude model id used by the headless research agent (`worktask research`).
+Claude model id used by the headless research agent (`btw research`).
 
 When unset, the runner picks its built-in default, currently `claude-sonnet-4-6`. Sonnet is the right default for retrieval+summarization across MCP tools — the interactive default (often Opus) would burn the usage limit on every batch sweep without a meaningful quality gain here.
 
-The `--model` flag on `worktask research` overrides this key for a single invocation.
+The `--model` flag on `btw research` overrides this key for a single invocation.
 
 ## `research_prompt_path`
 
-Path to a custom research prompt template. When unset, `worktask` ships an embedded default that is used as-is.
+Path to a custom research prompt template. When unset, `btw` ships an embedded default that is used as-is.
 
 The default is `<config_dir>/research-prompt.md` — i.e. a sibling of `config.toml`. Drop a file at that path (or anywhere `research_prompt_path` points) to override the embedded prompt without recompiling the binary.
 
@@ -74,7 +74,7 @@ When the key is absent, the agent runs against only the vanilla baseline.
 
 ### Threat model
 
-The research agent is spawned by `worktask` with `--permission-mode=bypassPermissions`. It runs unattended. The `--allowed-tools` list is the security boundary: anything on it can be invoked without prompting; anything off it is denied.
+The research agent is spawned by `btw` with `--permission-mode=bypassPermissions`. It runs unattended. The `--allowed-tools` list is the security boundary: anything on it can be invoked without prompting; anything off it is denied.
 
 That makes the contents of `research_extra_tools` security-meaningful. Two rules follow:
 
@@ -83,7 +83,7 @@ That makes the contents of `research_extra_tools` security-meaningful. Two rules
 
 ### Validation
 
-`worktask` rejects entries that would let the unattended agent write to disk or run arbitrary shell commands at config load. The error names the offending entry, its index in the list, and the path of the `config.toml` it came from, so you can locate and fix it in seconds.
+`btw` rejects entries that would let the unattended agent write to disk or run arbitrary shell commands at config load. The error names the offending entry, its index in the list, and the path of the `config.toml` it came from, so you can locate and fix it in seconds.
 
 Rejected entries:
 
@@ -200,8 +200,8 @@ research_extra_tools = [
 
 `gh api` is intentionally not on this list. It can issue arbitrary HTTP methods (`-X POST/PATCH/DELETE`, or `-f field=value` which auto-switches to POST), so the read/write boundary collapses to the `gh` auth token's scopes rather than the argv pattern.
 
-### Migrating from older `worktask`
+### Migrating from older `btw`
 
-Earlier versions of `worktask` shipped a personal allowlist hard-coded into the binary — Atlassian, Slack, Datadog, and `gh` MCP tool names were all in-source. That is no longer the case: the shipped binary's allowlist is `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`, and nothing else.
+Earlier versions of `btw` shipped a personal allowlist hard-coded into the binary — Atlassian, Slack, Datadog, and `gh` MCP tool names were all in-source. That is no longer the case: the shipped binary's allowlist is `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`, and nothing else.
 
 If you were relying on the old in-source allowlist, add a `research_extra_tools` block to your `config.toml` per machine. The starter snippets above are drop-in equivalents to the previously-bundled lists.

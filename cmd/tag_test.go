@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // TestTagLsCmd_jsonModeReturnsTagsEnvelope is the end-to-end test for
-// `worktask --format=json tag ls`: stdout is the {"tags": [...]} envelope
+// `btw --format=json tag ls`: stdout is the {"tags": [...]} envelope
 // with entries sorted alphabetically.
 func TestTagLsCmd_jsonModeReturnsTagsEnvelope(t *testing.T) {
 	tmp := t.TempDir()
@@ -63,7 +63,7 @@ func TestTagLsCmd_jsonModeReturnsTagsEnvelope(t *testing.T) {
 }
 
 // TestTagLsCmd_humanModeEmitsSpaceSeparatedLine is the end-to-end test
-// for `worktask tag ls`: in human mode, output is a single line of
+// for `btw tag ls`: in human mode, output is a single line of
 // "name (count)" entries with no header, no ANSI escapes — the contract
 // pipe-mode callers rely on for grep/awk.
 func TestTagLsCmd_humanModeEmitsSpaceSeparatedLine(t *testing.T) {
@@ -271,7 +271,7 @@ func TestTagLsCmd_allFlagIncludesOpenAndClosed(t *testing.T) {
 }
 
 // TestTagRmCmd_removesTagFromOpenTaskAndPrintsRemovedMessage is the
-// end-to-end test for `worktask tag rm <fragment> <tag>`.
+// end-to-end test for `btw tag rm <fragment> <tag>`.
 func TestTagRmCmd_removesTagFromOpenTaskAndPrintsRemovedMessage(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", tmp)
@@ -326,7 +326,7 @@ func TestTagRmCmd_removesTagFromOpenTaskAndPrintsRemovedMessage(t *testing.T) {
 }
 
 // TestTagAddCmd_addsTagToOpenTaskAndPrintsTaggedID is the end-to-end
-// test for `worktask tag add <fragment> <tag>`.
+// test for `btw tag add <fragment> <tag>`.
 func TestTagAddCmd_addsTagToOpenTaskAndPrintsTaggedID(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", tmp)

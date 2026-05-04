@@ -1,10 +1,10 @@
 ---
 title: Reference slash command
-description: Manage tasks via the worktask CLI
+description: Manage tasks via the bytheway CLI
 argument-hint: <add|list|show|close|reopen|update|append|tag|edit|research> [args...]
 ---
 
-Manage tasks via the `worktask` CLI. Task state lives in per-task markdown files under the configured XDG data directory; this command never reads, parses, or rewrites `WORKING.md` or any task file directly. The CLI owns ID generation, slug generation, match resolution, and formatting.
+Manage tasks via the `btw` CLI. Task state lives in per-task markdown files under the configured XDG data directory; this command never reads, parses, or rewrites `WORKING.md` or any task file directly. The CLI owns ID generation, slug generation, match resolution, and formatting.
 
 ## Dispatch
 
@@ -12,17 +12,17 @@ Parse `$ARGUMENTS` as `<subcommand> [args...]`. Shell out with `--format=json`:
 
 | Subcommand | Shell |
 |---|---|
-| `add <description>` | `worktask --format=json add "<description>"` |
-| `list` (also `--all`, `--closed`, `--limit N`, `--tag TAG`) | `worktask --format=json list [flags]` |
-| `show <frag>` | `worktask --format=json show "<frag>"` |
-| `close <frag>` | `worktask --format=json close "<frag>"` |
-| `reopen <frag>` | `worktask --format=json reopen "<frag>"` |
-| `update <frag> <new description>` | `worktask --format=json update "<frag>" "<new description>"` |
-| `append <frag> <text>` | `worktask --format=json append "<frag>" "<text>"` |
-| `tag add <frag> <tag>` | `worktask tag add "<frag>" "<tag>"` |
-| `tag rm <frag> <tag>` | `worktask tag rm "<frag>" "<tag>"` |
-| `tag ls` (also `--all`, `--closed`) | `worktask --format=json tag ls [flags]` |
-| `edit <frag>` | see below — do NOT shell out to `worktask edit` |
+| `add <description>` | `btw --format=json add "<description>"` |
+| `list` (also `--all`, `--closed`, `--limit N`, `--tag TAG`) | `btw --format=json list [flags]` |
+| `show <frag>` | `btw --format=json show "<frag>"` |
+| `close <frag>` | `btw --format=json close "<frag>"` |
+| `reopen <frag>` | `btw --format=json reopen "<frag>"` |
+| `update <frag> <new description>` | `btw --format=json update "<frag>" "<new description>"` |
+| `append <frag> <text>` | `btw --format=json append "<frag>" "<text>"` |
+| `tag add <frag> <tag>` | `btw tag add "<frag>" "<tag>"` |
+| `tag rm <frag> <tag>` | `btw tag rm "<frag>" "<tag>"` |
+| `tag ls` (also `--all`, `--closed`) | `btw --format=json tag ls [flags]` |
+| `edit <frag>` | see below — do NOT shell out to `btw edit` |
 | `research [<frag>]` | see "research" below — invokes a background bash, returns an ack, reports back when done |
 
 Quote each argument as a single token. `<frag>` may be an ID, ID prefix, or description fragment; the CLI resolves it.
@@ -44,19 +44,19 @@ When the CLI exits non-zero, parse stdout as JSON and branch on the `error` fiel
 
 ## `edit <frag>`
 
-`worktask edit` launches `$EDITOR` via `syscall.Exec`, which is not usable from an agent shell. Instead:
+`btw edit` launches `$EDITOR` via `syscall.Exec`, which is not usable from an agent shell. Instead:
 
-1. Run `worktask --format=json show "<frag>"` to validate the fragment.
+1. Run `btw --format=json show "<frag>"` to validate the fragment.
 2. If ambiguous or no_match, handle per the rules above.
-3. On a single match, tell the user: "Run `worktask edit <id>` from your shell to open it in your editor."
+3. On a single match, tell the user: "Run `btw edit <id>` from your shell to open it in your editor."
 
 ## `research [<frag>]`
 
 `research` spawns one or more headless `claude -p` agents that perform read-only research and write findings back to the task body. It can take minutes per task. Run it as a background bash so the parent session stays responsive.
 
 1. Invoke via the `Bash` tool with `run_in_background=true`:
-   - Single task: `worktask research "<frag>"`
-   - Sweep all open tasks (skip already-researched): `worktask research`
+   - Single task: `btw research "<frag>"`
+   - Sweep all open tasks (skip already-researched): `btw research`
    - Pass through `--all`, `--stale=<dur>`, `--tag=<tag>`, `--concurrency=N`, `--timeout=<dur>` flags if the user asked for them. `--tag` is batch-mode-only and composes as an additional AND with `--stale`/`--all`.
 2. Reply to the user with an immediate ack (e.g. "queued research on `<frag>`, I'll report when it lands") and stop. Do NOT block, poll, or sleep.
 3. The harness will notify you when the background bash exits. At that point read `BashOutput` for the run.

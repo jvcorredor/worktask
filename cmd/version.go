@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	intversion "github.com/jvcorredor/worktask/internal/version"
+	intversion "github.com/jvcorredor/bytheway/internal/version"
 )
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the worktask version",
+	Short: "Print the btw version",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		info := intversion.Get()
@@ -31,7 +31,7 @@ var versionCmd = &cobra.Command{
 			_, err = cmd.OutOrStdout().Write(data)
 			return err
 		case formatHuman:
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "worktask %s (commit %s, built %s)\n", info.Version, info.Commit, info.Date)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "btw %s (commit %s, built %s)\n", info.Version, info.Commit, info.Date)
 			return err
 		default:
 			return fmt.Errorf("unknown format: %s", format)

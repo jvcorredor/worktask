@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	intversion "github.com/jvcorredor/worktask/internal/version"
+	intversion "github.com/jvcorredor/bytheway/internal/version"
 )
 
 // Version, Commit, and Date are the cobra-side ldflags landing zone.
 // Release builds inject them via
 //
-//	go build -ldflags="-X github.com/jvcorredor/worktask/cmd.Version=v1.2.3 \
-//	                   -X github.com/jvcorredor/worktask/cmd.Commit=$SHA \
-//	                   -X github.com/jvcorredor/worktask/cmd.Date=$ISO8601"
+//	go build -ldflags="-X github.com/jvcorredor/bytheway/cmd.Version=v1.2.3 \
+//	                   -X github.com/jvcorredor/bytheway/cmd.Commit=$SHA \
+//	                   -X github.com/jvcorredor/bytheway/cmd.Date=$ISO8601"
 //
 // They mirror the convention of putting build identity at the binary's
 // command package; syncVersion forwards them into internal/version where

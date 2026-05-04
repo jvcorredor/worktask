@@ -8,9 +8,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
-	"github.com/jvcorredor/worktask/internal/tty"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
+	"github.com/jvcorredor/bytheway/internal/tty"
 )
 
 const (

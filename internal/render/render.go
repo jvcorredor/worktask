@@ -31,7 +31,7 @@
 // preserving the pipe-mode round-trip contract.
 //
 // JSON research-run schema (stable): per-task summary line emitted on stdout
-// when `worktask research <hash>` completes.
+// when `btw research <hash>` completes.
 //
 //	{
 //	  "id":          string,  // 8-char lowercase hex
@@ -51,8 +51,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 type jsonTask struct {
@@ -138,7 +138,7 @@ type jsonResearchRun struct {
 }
 
 // JSONResearchRun renders the per-task summary line emitted on stdout
-// when `worktask research <hash>` completes. The output schema is
+// when `btw research <hash>` completes. The output schema is
 // described in the package documentation.
 func JSONResearchRun(r ResearchRun) ([]byte, error) {
 	return marshalIndent(jsonResearchRun(r))

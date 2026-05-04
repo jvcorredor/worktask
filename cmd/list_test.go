@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // TestListCmd_tagFlagFiltersToTaggedTasks is the end-to-end test for
-// `worktask list --tag bug`: only tasks with that tag appear; uppercase
+// `btw list --tag bug`: only tasks with that tag appear; uppercase
 // is normalized.
 func TestListCmd_tagFlagFiltersToTaggedTasks(t *testing.T) {
 	tmp := t.TempDir()
@@ -96,7 +96,7 @@ func TestListCmd_tagFlagInvalidValueErrors(t *testing.T) {
 }
 
 // TestListCmd_humanPipeModeIsPlain is the end-to-end pipe-mode test:
-// when stdout is a non-TTY writer (here, *bytes.Buffer), `worktask list`
+// when stdout is a non-TTY writer (here, *bytes.Buffer), `btw list`
 // must emit the plain `id  YYYY-MM-DD HH:MM  [tags]  description\n` rows
 // with no header and no ANSI escapes — the contract callers rely on for
 // piping into grep, awk, and other text tools.

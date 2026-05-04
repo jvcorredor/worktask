@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/store"
+	"github.com/jvcorredor/bytheway/internal/store"
 )
 
 func TestRun_TracerBullet(t *testing.T) {

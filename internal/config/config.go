@@ -1,11 +1,11 @@
-// Package config loads and validates the user's worktask configuration.
+// Package config loads and validates the user's btw configuration.
 //
 // The configuration is read from a single TOML file. The path is
 // $XDG_CONFIG_HOME/worktask/config.toml when XDG_CONFIG_HOME is set, and
 // $HOME/.config/worktask/config.toml otherwise. A missing file is not an
 // error; defaults fill in. See the user-visible config keys and their
 // meanings on the docs site at
-// <https://jvcorredor.github.io/worktask/configuration/>.
+// <https://jvcorredor.github.io/bytheway/configuration/>.
 //
 // [Load] is the only entry point for callers; values that escape this
 // package have already passed [ValidateExtraTools] and are safe to feed
@@ -77,7 +77,7 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-// ResolveEditor returns the editor command worktask should launch for
+// ResolveEditor returns the editor command btw should launch for
 // interactive edits. The configured Editor wins; otherwise the EDITOR
 // environment variable is used; otherwise the function falls back to vi.
 func (c Config) ResolveEditor() string {

@@ -1,17 +1,17 @@
 ---
 title: Install
-description: Install worktask from a pre-built binary or from source, with environment-variable overrides, $PATH setup, and checksum verification.
+description: Install bytheway from a pre-built binary or from source, with environment-variable overrides, $PATH setup, and checksum verification.
 ---
 
-worktask supports two install methods: a pre-built binary served from this docs site (no Go toolchain required), and `go install` from source.
+bytheway supports two install methods: a pre-built binary served from this docs site (no Go toolchain required), and `go install` from source.
 
 ## Pre-built binary
 
 ```
-curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 ```
 
-The script downloads the platform-appropriate tarball and `checksums.txt` from the matching [GitHub Release](https://github.com/jvcorredor/worktask/releases), verifies the SHA256 of the tarball against the manifest, and extracts the `worktask` binary into the install directory. It does not edit any shell rc files.
+The script downloads the platform-appropriate tarball and `checksums.txt` from the matching [GitHub Release](https://github.com/jvcorredor/bytheway/releases), verifies the SHA256 of the tarball against the manifest, and extracts the `btw` binary into the install directory. It does not edit any shell rc files.
 
 ### Environment-variable overrides
 
@@ -21,8 +21,8 @@ The script downloads the platform-appropriate tarball and `checksums.txt` from t
 | `VERSION`     | latest GitHub release    | Pin to a specific release tag, e.g. `VERSION=0.2.0` (leading `v` optional).  |
 
 ```
-INSTALL_DIR=/usr/local/bin curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sudo sh
-VERSION=0.2.0 curl -fsSL https://jvcorredor.github.io/worktask/install.sh | sh
+INSTALL_DIR=/usr/local/bin curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sudo sh
+VERSION=0.2.0 curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 ```
 
 ### Supported platforms
@@ -39,20 +39,20 @@ The script downloads `checksums.txt` from the same release and compares the SHA2
 
 ### Re-running the script
 
-If a `worktask` binary already lives at the destination, the script reads its version with `worktask version` and prints `Upgrading worktask from X to Y` when the resolved version differs.
+If a `btw` binary already lives at the destination, the script reads its version with `btw version` and prints `Upgrading bytheway from X to Y` when the resolved version differs.
 
 ### macOS quarantine note
 
 Tarballs downloaded through a browser get the `com.apple.quarantine` extended attribute, which makes Gatekeeper block the binary on first run. The install script downloads via `curl` and is unaffected. If you fetched the tarball manually instead, clear the attribute once before running:
 
 ```
-xattr -dr com.apple.quarantine ./worktask
+xattr -dr com.apple.quarantine ./bytheway
 ```
 
 ## From source (`go install`)
 
 ```
-go install github.com/jvcorredor/worktask@latest
+go install github.com/jvcorredor/bytheway@latest
 ```
 
-Requires a Go toolchain. The binary lands in `$GOBIN` (or `$GOPATH/bin`) as `worktask`. Pin a specific version with `@v0.2.0`. Module-mode `go install` does the same SHA verification as any other Go module download.
+Requires a Go toolchain. The binary lands in `$GOBIN` (or `$GOPATH/bin`) as `btw`. Pin a specific version with `@v0.2.0`. Module-mode `go install` does the same SHA verification as any other Go module download.

@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // TestCloseCmd_movesOpenTaskToClosedAndPrintsClosedID is the end-to-end
-// test for `worktask close <fragment>`: the open task file moves under
+// test for `btw close <fragment>`: the open task file moves under
 // closed/, the frontmatter gets a `completed:` stamp, and stdout reads
 // `closed <id>` (the verb matches the new subcommand name and the
 // inverse `reopen`).
@@ -68,7 +68,7 @@ func TestCloseCmd_movesOpenTaskToClosedAndPrintsClosedID(t *testing.T) {
 }
 
 // TestCompleteCmd_isRemoved enforces the no-alias acceptance criterion:
-// after the rename, `worktask complete <fragment>` must error out as an
+// after the rename, `btw complete <fragment>` must error out as an
 // unknown subcommand so that agents using the JSON envelope re-pin to
 // the new name rather than silently keep working against a deprecated
 // alias.

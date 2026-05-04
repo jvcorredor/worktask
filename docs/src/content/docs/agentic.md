@@ -1,9 +1,9 @@
 ---
 title: Agentic usage
-description: Using worktask from an LLM agent — JSON schema, error envelopes, and the reference slash command pattern.
+description: Using bytheway from an LLM agent — JSON schema, error envelopes, and the reference slash command pattern.
 ---
 
-`worktask` is built primarily as a tool for an LLM agent (Claude Code) to call from a thin slash command. Match resolution, ID generation, slug generation, and formatting all live in the CLI so the agent never has to read or rewrite task files itself. A read-only `list` or `show` costs the agent only the bytes the CLI prints, not the entire file store.
+`btw` is built primarily as a tool for an LLM agent (Claude Code) to call from a thin slash command. Match resolution, ID generation, slug generation, and formatting all live in the CLI so the agent never has to read or rewrite task files itself. A read-only `list` or `show` costs the agent only the bytes the CLI prints, not the entire file store.
 
 This page documents the contract between the CLI and an agent wrapper: the JSON schema returned by every subcommand, the error envelopes the agent must branch on, and the dispatch pattern the reference slash command uses.
 
@@ -49,17 +49,17 @@ The reference slash command for Claude Code is a thin wrapper. It does not read 
 | Subcommands | How the wrapper invokes them | Notes |
 |-------------|------------------------------|-------|
 | `add`, `list`, `show`, `update`, `append`, `close`, `reopen` | Shell out with `--format=json`. On exit 0, pass success output through. On non-zero exit, branch on the `error` discriminator. | Uniform shape across all of them. |
-| `edit` | Does **not** shell out. Validate the fragment via `show`, then tell the user to run `worktask edit <id>` from their own shell. | The binary `syscall.Exec`s `$EDITOR`, which is unusable from an agent shell. |
+| `edit` | Does **not** shell out. Validate the fragment via `show`, then tell the user to run `btw edit <id>` from their own shell. | The binary `syscall.Exec`s `$EDITOR`, which is unusable from an agent shell. |
 
 ## Reference slash command
 
-A vendored reference implementation of the Claude Code slash command lives in this repo at `docs/src/content/docs/examples/worktask-slash-command.md`. The full source is rendered on the [Reference slash command](./examples/worktask-slash-command.md) page — read it end-to-end to see the dispatch table, error-envelope branching, and the `edit` / `research` special cases in their working form.
+A vendored reference implementation of the Claude Code slash command lives in this repo at `docs/src/content/docs/examples/bytheway-slash-command.md`. The full source is rendered on the [Reference slash command](./examples/bytheway-slash-command.md) page — read it end-to-end to see the dispatch table, error-envelope branching, and the `edit` / `research` special cases in their working form.
 
 :::tip[Curl the canonical source]
 For templating into another agent, fetch the raw markdown directly:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/jvcorredor/worktask/main/docs/src/content/docs/examples/worktask-slash-command.md
+curl -fsSL https://raw.githubusercontent.com/jvcorredor/bytheway/main/docs/src/content/docs/examples/bytheway-slash-command.md
 ```
 
 The file's frontmatter is Claude-Code-compatible (`description:`, `argument-hint:`); the additional `title:` key Starlight needs is ignored by Claude Code, so the raw download is a drop-in slash command source.
@@ -67,10 +67,10 @@ The file's frontmatter is Claude-Code-compatible (`description:`, `argument-hint
 
 ## Research-agent allowlist
 
-`worktask research` spawns a headless Claude Code subagent under `--permission-mode=bypassPermissions`, with an explicit `--allowed-tools` list. That list is the security boundary, and it is config-driven on a per-machine basis: the shipped binary contributes a vanilla baseline of five built-in read-only tools (`Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`), and the user's `config.toml` extends it via [`research_extra_tools`](./config.md#research_extra_tools). MCP tool names and pattern-restricted `Bash(...)` invocations belong in the config, not in the binary.
+`btw research` spawns a headless Claude Code subagent under `--permission-mode=bypassPermissions`, with an explicit `--allowed-tools` list. That list is the security boundary, and it is config-driven on a per-machine basis: the shipped binary contributes a vanilla baseline of five built-in read-only tools (`Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`), and the user's `config.toml` extends it via [`research_extra_tools`](./config.md#research_extra_tools). MCP tool names and pattern-restricted `Bash(...)` invocations belong in the config, not in the binary.
 
-If you are wrapping `worktask research` from another agent, you do not need to thread tool names through the wrapper — they live in the operator's `config.toml`. The CLI surface (subcommand name, flags, JSON output, exit-code envelope) is unchanged by the allowlist mechanism.
+If you are wrapping `btw research` from another agent, you do not need to thread tool names through the wrapper — they live in the operator's `config.toml`. The CLI surface (subcommand name, flags, JSON output, exit-code envelope) is unchanged by the allowlist mechanism.
 
 ## Skills
 
-Claude Code also exposes a wrapper surface called *skills* alongside slash commands. There is no shipped `worktask` skill, and there will not be one — the soak phase between capture and investigation requires explicit user control over when investigation fires, which a wrapper that auto-chains stages would erase. The canonical end-to-end pattern is documented as recipes against existing CLI primitives on the [Agentic recipes](./agentic-recipes.md) page.
+Claude Code also exposes a wrapper surface called *skills* alongside slash commands. There is no shipped `btw` skill, and there will not be one — the soak phase between capture and investigation requires explicit user control over when investigation fires, which a wrapper that auto-chains stages would erase. The canonical end-to-end pattern is documented as recipes against existing CLI primitives on the [Agentic recipes](./agentic-recipes.md) page.

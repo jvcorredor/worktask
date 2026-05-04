@@ -1,9 +1,9 @@
 ---
 title: File & storage format
-description: How worktask lays out tasks on disk and the on-disk shape of each task file.
+description: How bytheway lays out tasks on disk and the on-disk shape of each task file.
 ---
 
-`worktask` keeps each task as its own markdown file. Status is encoded by which subdirectory the file lives in: `open/` or `closed/`. The data directory is plain enough that `cat`, `grep`, `rg`, and `vim` work directly without going through the binary.
+`btw` keeps each task as its own markdown file. Status is encoded by which subdirectory the file lives in: `open/` or `closed/`. The data directory is plain enough that `cat`, `grep`, `rg`, and `vim` work directly without going through the binary.
 
 ## Data directory
 

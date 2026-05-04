@@ -8,9 +8,9 @@
 #                          (the curl shim resolves URLs to files under here)
 #
 # The shim maps:
-#   https://api.github.com/repos/jvcorredor/worktask/releases/latest
+#   https://api.github.com/repos/jvcorredor/bytheway/releases/latest
 #       -> $fixtures/latest.json
-#   https://github.com/jvcorredor/worktask/releases/download/<rest>
+#   https://github.com/jvcorredor/bytheway/releases/download/<rest>
 #       -> $fixtures/<rest>
 #
 # Cases assemble the fixture tree they need, invoke install.sh under HOME=$home_dir
@@ -46,7 +46,7 @@ cleanup_sandbox() {
 
 # Build a fake release tarball + checksums.txt under $fixtures/<tag>/.
 # Args: tag (e.g. v0.2.0), os (linux|darwin), arch (amd64|arm64), [version_for_binary]
-# The fake binary is a shell script that prints "worktask <version>" on `version`.
+# The fake binary is a shell script that prints "btw <version>" on `version`.
 build_fixture_release() {
     tag="$1"; os="$2"; arch="$3"
     version="${4:-${tag#v}}"
@@ -54,16 +54,16 @@ build_fixture_release() {
     mkdir -p "$rel_dir"
     build_dir="$sandbox/build.$$.$tag.$os.$arch"
     mkdir -p "$build_dir"
-    cat >"$build_dir/worktask" <<EOF
+    cat >"$build_dir/btw" <<EOF
 #!/bin/sh
 case "\$1" in
-    version|--version|-v) echo "worktask $version" ;;
-    *) echo "worktask $version" ;;
+    version|--version|-v) echo "btw $version" ;;
+    *) echo "btw $version" ;;
 esac
 EOF
-    chmod +x "$build_dir/worktask"
-    tarball="worktask_${version}_${os}_${arch}.tar.gz"
-    tar -czf "$rel_dir/$tarball" -C "$build_dir" worktask
+    chmod +x "$build_dir/btw"
+    tarball="bytheway_${version}_${os}_${arch}.tar.gz"
+    tar -czf "$rel_dir/$tarball" -C "$build_dir" btw
     # Append to checksums.txt (one release may have multiple platforms).
     (
         cd "$rel_dir"
@@ -99,10 +99,10 @@ done
 [ -n "${WT_CURL_LOG:-}" ] && printf '%s\n' "$url" >>"$WT_CURL_LOG"
 src=
 case "$url" in
-    https://api.github.com/repos/jvcorredor/worktask/releases/latest)
+    https://api.github.com/repos/jvcorredor/bytheway/releases/latest)
         src="$WT_FIXTURES/latest.json" ;;
-    https://github.com/jvcorredor/worktask/releases/download/*)
-        rest="${url#https://github.com/jvcorredor/worktask/releases/download/}"
+    https://github.com/jvcorredor/bytheway/releases/download/*)
+        rest="${url#https://github.com/jvcorredor/bytheway/releases/download/}"
         src="$WT_FIXTURES/$rest" ;;
     *)
         echo "curl-shim: unhandled url $url" >&2; exit 22 ;;
@@ -159,9 +159,9 @@ case_tracer_bullet_default_install() {
     build_fixture_release v0.2.0 linux amd64
     fixture_latest_tag v0.2.0
     run_install
-    [ -x "$home_dir/.local/bin/worktask" ] || { echo "binary not installed"; return 1; }
-    out="$("$home_dir/.local/bin/worktask" version)"
-    [ "$out" = "worktask 0.2.0" ] || { echo "version mismatch: $out"; return 1; }
+    [ -x "$home_dir/.local/bin/btw" ] || { echo "binary not installed"; return 1; }
+    out="$("$home_dir/.local/bin/btw" version)"
+    [ "$out" = "btw 0.2.0" ] || { echo "version mismatch: $out"; return 1; }
 }
 
 case_install_dir_override() {
@@ -171,8 +171,8 @@ case_install_dir_override() {
     fixture_latest_tag v0.2.0
     custom="$sandbox/custom/bin"
     run_install INSTALL_DIR="$custom"
-    [ -x "$custom/worktask" ] || { echo "binary not in custom dir"; return 1; }
-    [ ! -e "$home_dir/.local/bin/worktask" ] || { echo "binary leaked into default dir"; return 1; }
+    [ -x "$custom/btw" ] || { echo "binary not in custom dir"; return 1; }
+    [ ! -e "$home_dir/.local/bin/btw" ] || { echo "binary leaked into default dir"; return 1; }
 }
 
 case_version_pin_skips_latest_lookup() {
@@ -181,8 +181,8 @@ case_version_pin_skips_latest_lookup() {
     build_fixture_release v0.1.0 linux amd64
     # Intentionally no latest.json — VERSION must skip the /latest call.
     run_install VERSION=0.1.0
-    out="$("$home_dir/.local/bin/worktask" version)"
-    [ "$out" = "worktask 0.1.0" ] || { echo "wrong version installed: $out"; return 1; }
+    out="$("$home_dir/.local/bin/btw" version)"
+    [ "$out" = "btw 0.1.0" ] || { echo "wrong version installed: $out"; return 1; }
 }
 
 case_version_pin_accepts_v_prefix() {
@@ -190,8 +190,8 @@ case_version_pin_accepts_v_prefix() {
     install_uname_shim Linux x86_64
     build_fixture_release v0.1.0 linux amd64
     run_install VERSION=v0.1.0
-    out="$("$home_dir/.local/bin/worktask" version)"
-    [ "$out" = "worktask 0.1.0" ] || { echo "wrong version installed: $out"; return 1; }
+    out="$("$home_dir/.local/bin/btw" version)"
+    [ "$out" = "btw 0.1.0" ] || { echo "wrong version installed: $out"; return 1; }
 }
 
 case_default_version_calls_latest_api() {
@@ -200,7 +200,7 @@ case_default_version_calls_latest_api() {
     build_fixture_release v0.2.0 linux amd64
     fixture_latest_tag v0.2.0
     run_install
-    grep -qx 'https://api.github.com/repos/jvcorredor/worktask/releases/latest' \
+    grep -qx 'https://api.github.com/repos/jvcorredor/bytheway/releases/latest' \
         "$sandbox/curl.log" \
         || { echo "expected /releases/latest in curl log:"; cat "$sandbox/curl.log"; return 1; }
 }
@@ -210,7 +210,7 @@ case_version_pin_does_not_call_latest_api() {
     install_uname_shim Linux x86_64
     build_fixture_release v0.1.0 linux amd64
     run_install VERSION=0.1.0
-    if grep -qx 'https://api.github.com/repos/jvcorredor/worktask/releases/latest' \
+    if grep -qx 'https://api.github.com/repos/jvcorredor/bytheway/releases/latest' \
         "$sandbox/curl.log"; then
         echo "VERSION pin should not call /releases/latest, but it did:"
         cat "$sandbox/curl.log"
@@ -224,12 +224,12 @@ case_checksum_mismatch_aborts() {
     build_fixture_release v0.2.0 linux amd64
     fixture_latest_tag v0.2.0
     # Corrupt the tarball after checksums.txt was written, so SHA won't match.
-    printf 'corrupted' >>"$fixtures/v0.2.0/worktask_0.2.0_linux_amd64.tar.gz"
+    printf 'corrupted' >>"$fixtures/v0.2.0/bytheway_0.2.0_linux_amd64.tar.gz"
     if run_install; then
         echo "install.sh should have failed on checksum mismatch"
         return 1
     fi
-    [ ! -e "$home_dir/.local/bin/worktask" ] \
+    [ ! -e "$home_dir/.local/bin/btw" ] \
         || { echo "binary was installed despite checksum mismatch"; return 1; }
 }
 
@@ -326,7 +326,7 @@ case_platform_linux_arm64() {
     build_fixture_release v0.2.0 linux arm64
     fixture_latest_tag v0.2.0
     run_install
-    [ -x "$home_dir/.local/bin/worktask" ] || { echo "binary not installed"; return 1; }
+    [ -x "$home_dir/.local/bin/btw" ] || { echo "binary not installed"; return 1; }
 }
 
 case_platform_darwin_amd64() {
@@ -335,7 +335,7 @@ case_platform_darwin_amd64() {
     build_fixture_release v0.2.0 darwin amd64
     fixture_latest_tag v0.2.0
     run_install
-    [ -x "$home_dir/.local/bin/worktask" ] || { echo "binary not installed"; return 1; }
+    [ -x "$home_dir/.local/bin/btw" ] || { echo "binary not installed"; return 1; }
 }
 
 case_platform_darwin_arm64() {
@@ -344,7 +344,7 @@ case_platform_darwin_arm64() {
     build_fixture_release v0.2.0 darwin arm64
     fixture_latest_tag v0.2.0
     run_install
-    [ -x "$home_dir/.local/bin/worktask" ] || { echo "binary not installed"; return 1; }
+    [ -x "$home_dir/.local/bin/btw" ] || { echo "binary not installed"; return 1; }
 }
 
 case_platform_unsupported_os_aborts() {

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/research/runner"
-	"github.com/jvcorredor/worktask/internal/store"
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/research/runner"
+	"github.com/jvcorredor/bytheway/internal/store"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 const fixedTemplate = "Research the following task:\n\n{{.Body}}"

@@ -53,7 +53,7 @@ type Command struct {
 // install has — no MCPs, no Bash patterns. The shipped binary cannot assume
 // any particular MCP server is installed in the user's environment, so
 // install-specific tool wiring (Slack/Jira/Datadog MCPs, Bash(gh:*) patterns,
-// etc.) is config-owned: users opt in via worktask config, which a
+// etc.) is config-owned: users opt in via btw config, which a
 // follow-up slice will load with validation that rejects bare Bash and any
 // non-`mcp__*`/non-`Bash(...)` entry.
 //

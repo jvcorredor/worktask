@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/jvcorredor/worktask/internal/tag"
+	"github.com/jvcorredor/bytheway/internal/tag"
 )
 
 // validateResearchTag normalizes raw and verifies it is a syntactically

@@ -1,11 +1,11 @@
 version: 2
 
-project_name: worktask
+project_name: btw
 
 builds:
-  - id: worktask
+  - id: btw
     main: .
-    binary: worktask
+    binary: btw
     env:
       - CGO_ENABLED=0
     goos:
@@ -18,19 +18,19 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/jvcorredor/worktask/internal/version.Version={{ .Version }}
-      - -X github.com/jvcorredor/worktask/internal/version.Commit={{ .FullCommit }}
-      - -X github.com/jvcorredor/worktask/internal/version.Date={{ .Date }}
+      - -X github.com/jvcorredor/bytheway/internal/version.Version={{ .Version }}
+      - -X github.com/jvcorredor/bytheway/internal/version.Commit={{ .FullCommit }}
+      - -X github.com/jvcorredor/bytheway/internal/version.Date={{ .Date }}
 
 archives:
   # `format:` (singular) and the absence of `ids:` are required for
   # compatibility with the goreleaser library version pinned by
   # hooks-goreleaser (currently goreleaser v2.3.2). The newer
-  # `formats: [tar.gz]` and `ids: [worktask]` schema fields are
+  # `formats: [tar.gz]` and `ids: [btw]` schema fields are
   # rejected by that version's unmarshaller.
-  - id: worktask
+  - id: btw
     format: tar.gz
-    name_template: worktask_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    name_template: bytheway_{{ .Version }}_{{ .Os }}_{{ .Arch }}
     files:
       - LICENSE
 

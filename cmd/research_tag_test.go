@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jvcorredor/worktask/internal/task"
+	"github.com/jvcorredor/bytheway/internal/task"
 )
 
 // TestValidateResearchTag covers the pure helper that normalizes the
@@ -49,7 +49,7 @@ func TestValidateResearchTag(t *testing.T) {
 }
 
 // TestResearchCmd_tagFlagInvalidValueErrors verifies that an invalid
-// --tag value (per tag.Validate) is rejected by `worktask research`
+// --tag value (per tag.Validate) is rejected by `btw research`
 // before any work — no claude run, no writeback. Mirrors the
 // list-command guarantee.
 func TestResearchCmd_tagFlagInvalidValueErrors(t *testing.T) {
@@ -96,7 +96,7 @@ func TestResearchCmd_tagFlagInvalidValueErrors(t *testing.T) {
 	}
 }
 
-// TestResearchCmd_tagFlagRejectedInSingleMode verifies that `worktask
+// TestResearchCmd_tagFlagRejectedInSingleMode verifies that `btw
 // research <fragment> --tag x` errors out clearly rather than silently
 // ignoring --tag — surfacing the user mistake before any agent runs.
 func TestResearchCmd_tagFlagRejectedInSingleMode(t *testing.T) {
