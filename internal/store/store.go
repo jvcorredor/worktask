@@ -249,10 +249,12 @@ type loaded struct {
 }
 
 // Candidate is a one-line summary of a task surfaced when fragment
-// resolution is ambiguous.
+// resolution is ambiguous. Tags carries the resolved task's tags so
+// callers can disambiguate by topic; it is nil when the task has none.
 type Candidate struct {
 	ID          string
 	Description string
+	Tags        []string
 }
 
 // ErrAmbiguous is returned when a fragment resolves to more than one
@@ -529,7 +531,7 @@ func (s *Store) resolve(fragment string, subdirs []string) (loaded, error) {
 		if len(hits) > 1 {
 			cands := make([]Candidate, 0, len(hits))
 			for _, h := range hits {
-				cands = append(cands, Candidate{ID: h.task.ID, Description: firstLine(h.task.Body)})
+				cands = append(cands, Candidate{ID: h.task.ID, Description: firstLine(h.task.Body), Tags: h.task.Tags})
 			}
 			return loaded{}, &ErrAmbiguous{Fragment: fragment, Candidates: cands}
 		}

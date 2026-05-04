@@ -34,7 +34,7 @@ If the subcommand is missing or unrecognized, print the table and stop. Do not g
 
 When the CLI exits non-zero, parse stdout as JSON and branch on the `error` field:
 
-- `"error": "ambiguous"` — fragment matched multiple tasks. Show `matches` (each `{id, description}`) and ask the user which one. Do NOT pick. Do NOT retry with a longer fragment.
+- `"error": "ambiguous"` — fragment matched multiple tasks. Show `matches` (each `{id, description, tags}`; `tags` is always present, empty array when none) and ask the user which one. Do NOT pick. Do NOT retry with a longer fragment.
 - `"error": "no_match"` — fragment matched nothing. Show `open_tasks` so the user can pick. Do NOT invent IDs or fabricate matches.
 - Any other non-zero exit: surface stderr verbatim.
 
