@@ -35,6 +35,15 @@ import (
 // filesystem.
 type RunFunc func(ctx context.Context, in runner.RunInput) (runner.Result, error)
 
+// DefaultRun is the production [RunFunc]: it spawns the headless claude
+// binary via [runner.OSExec]. The cmd shell hands this to [New] in
+// production wiring; tests pass an in-memory stub instead so the test
+// path never touches claude. Exposing it from this package lets cmd
+// drop its direct dependency on the [runner] subpackage.
+func DefaultRun(ctx context.Context, in runner.RunInput) (runner.Result, error) {
+	return runner.Run(ctx, in, runner.OSExec{})
+}
+
 // Config carries the fully-resolved settings the [Coordinator] needs.
 // All values are pre-resolved at the cmd boundary — Model and
 // ExtraTools have already absorbed flag overrides, and the prompt

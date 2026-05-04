@@ -200,6 +200,15 @@ Flags:
 
 The shipped binary's `--allowed-tools` baseline contains five built-in read-only tools and nothing else: `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch`. To extend the allowlist with MCP tools or pattern-restricted `Bash(...)` invocations on a per-machine basis, add a [`research_extra_tools`](./config.md#research_extra_tools) block to your `config.toml`. There is no `--extra-tool` flag; tool availability is a per-machine property, not a per-invocation one.
 
+### Batch outcome reporting
+
+In a batch run (`worktask research` or `worktask research --all`), every task makes it into the final summary, even when prep- or post-run plumbing fails. Two cases that previously fell through the cracks now surface as `failed` outcomes:
+
+- **Writeback errors** (the agent succeeded but the cmd could not append the Research section, set the `last_researched` frontmatter, or append the worklog line — for example, the task file went missing mid-run, or the worklog directory is unwritable) emit a `task_failed` event and a `failed` row in the summary. The agent's original summary text is preserved in the row's `summary` field; the writeback error message goes into `error`. Previously these were silently reported as if the writeback had succeeded.
+- **Per-task `prompt.Render` failures during prep** (a malformed override template, or a task whose frontmatter does not satisfy a custom template's field references) emit a synthetic `task_failed` event for that task and a `failed` row in the summary. Other tasks in the batch still run. Previously a single render failure aborted the whole sweep before any task ran.
+
+Both cases count toward `totals.failed` in the summary; the summary's `totals.skipped` continues to count only the staleness-based skip path.
+
 JSON output is documented in [Agentic usage](./agentic.md).
 
 ## `version`
