@@ -55,4 +55,16 @@ xattr -dr com.apple.quarantine ./bytheway
 go install github.com/jvcorredor/bytheway@latest
 ```
 
-Requires a Go toolchain. The binary lands in `$GOBIN` (or `$GOPATH/bin`) as `btw`. Pin a specific version with `@v0.2.0`. Module-mode `go install` does the same SHA verification as any other Go module download.
+Requires a Go toolchain. The binary lands in `$GOBIN` (or `$GOPATH/bin`) as `bytheway` — `go install` derives the executable name from the last element of the module path and offers no flag to override it. Pin a specific version with `@v0.2.0`. Module-mode `go install` does the same SHA verification as any other Go module download.
+
+If you want to invoke it as `btw`, add a shell alias:
+
+```
+# bash / zsh — in ~/.bashrc or ~/.zshrc
+alias btw=bytheway
+
+# fish — persists as ~/.config/fish/functions/btw.fish
+alias --save btw=bytheway
+```
+
+For a real `btw` executable on disk (no alias indirection), use the [pre-built binary](#pre-built-binary) install method instead — the release tarball ships the binary as `btw`.

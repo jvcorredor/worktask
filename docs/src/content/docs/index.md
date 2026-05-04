@@ -15,7 +15,7 @@ Pre-built binary (no Go toolchain required):
 curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 ```
 
-Installs the latest release to `$HOME/.local/bin/bytheway`. Override the destination with `INSTALL_DIR=/usr/local/bin` or pin the release with `VERSION=0.2.0`. Full reference and verification details live on the [Install](./install.md) page.
+Installs the latest release to `$HOME/.local/bin/btw`. Override the destination with `INSTALL_DIR=/usr/local/bin` or pin the release with `VERSION=0.2.0`. Full reference and verification details live on the [Install](./install.md) page.
 
 From source (requires Go):
 
@@ -23,7 +23,7 @@ From source (requires Go):
 go install github.com/jvcorredor/bytheway@latest
 ```
 
-The binary lands in `$GOBIN` as `btw`. Alias to `wt` if you want a shorter handle.
+The binary lands in `$GOBIN` as `bytheway` (the shell installer above is the path that produces a `btw` executable directly). Alias `btw=bytheway` if you want the shorter handle — see the [Install](./install.md#from-source-go-install) page.
 
 ## Where to go next
 
