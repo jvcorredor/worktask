@@ -14,9 +14,10 @@ import (
 )
 
 var editCmd = &cobra.Command{
-	Use:   "edit <fragment>",
-	Short: "Open a task file in the configured editor",
-	Args:  cobra.ExactArgs(1),
+	Use:               "edit <fragment>",
+	Short:             "Open a task file in the configured editor",
+	Args:              cobra.ExactArgs(1),
+	ValidArgsFunction: completeFragment(store.FilterAll),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fragment := args[0]
 		cfg, err := config.Load()

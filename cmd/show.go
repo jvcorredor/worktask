@@ -12,9 +12,10 @@ import (
 )
 
 var showCmd = &cobra.Command{
-	Use:   "show <fragment>",
-	Short: "Print a single task by id or description fragment",
-	Args:  cobra.ExactArgs(1),
+	Use:               "show <fragment>",
+	Short:             "Print a single task by id or description fragment",
+	Args:              cobra.ExactArgs(1),
+	ValidArgsFunction: completeFragment(store.FilterAll),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fragment := args[0]
 		s, err := newStore()

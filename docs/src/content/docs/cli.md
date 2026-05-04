@@ -245,3 +245,27 @@ For commands that take `<fragment>`, `btw` tries strategies in order and stops a
 If a strategy yields exactly one match, that is the result. If it yields more than one, the command exits non-zero with `ErrAmbiguous` and lists the candidates. If no strategy matches, it exits non-zero with `ErrNoMatch` and lists the current open tasks so the caller can pick.
 
 In `--format=json`, both error cases produce a JSON envelope with a stable `error` discriminator (`"ambiguous"` or `"no_match"`) so agents can branch without parsing prose. See [Agentic usage](./agentic.md) for the envelope shapes.
+
+## Shell completion
+
+Cobra emits completion scripts for bash, zsh, fish, and powershell via the hidden `completion <shell>` subcommand. Generate once and write to your shell's completions directory; the script delegates back to the binary at <kbd>Tab</kbd> time, so completions stay in sync as new subcommands ship without regenerating the script.
+
+```
+# fish
+btw completion fish > ~/.config/fish/completions/btw.fish
+
+# zsh (paths vary by setup)
+btw completion zsh > "${fpath[1]}/_btw"
+
+# bash
+btw completion bash > /etc/bash_completion.d/btw
+```
+
+For commands that take `<fragment>` — `show`, `close`, `reopen`, `edit`, `update`, `append`, `research`, `tag add`, `tag rm` — pressing <kbd>Tab</kbd> on the fragment position lists candidate tasks as `<id>\t<first body line>`, which fish and zsh render as the id alongside the task description. The candidate set is scoped per command:
+
+- `close`: open tasks only
+- `reopen`: closed tasks only
+- `research`: open tasks only
+- everything else: open and closed
+
+Subsequent positional arguments (e.g. the `<text>` of `update <fragment> <text>`) return no candidates and suppress filename fallback, so a stray <kbd>Tab</kbd> on the second arg does not flood the menu with files from the current directory.
