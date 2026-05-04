@@ -22,7 +22,7 @@ curl -fsSL https://jvcorredor.github.io/bytheway/install.sh | sh
 go install github.com/jvcorredor/bytheway@latest
 ```
 
-The binary lands in `$HOME/.local/bin` (or `$GOBIN` for `go install`) as `btw`. See the [install reference](https://jvcorredor.github.io/bytheway/install/) for env-var overrides and `$PATH` setup.
+The shell installer lands `btw` in `$HOME/.local/bin`. `go install` lands `bytheway` in `$GOBIN` — alias it with `alias btw=bytheway` (bash/zsh) or `alias --save btw=bytheway` (fish). See the [install reference](https://jvcorredor.github.io/bytheway/install/) for env-var overrides, `$PATH` setup, and the alias rationale.
 
 ## Documentation
 
